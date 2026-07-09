@@ -1,0 +1,28 @@
+:root{
+  --bg:#ffffff; --ink:#16202a; --muted:#5b6b7a; --line:#e6eaee;
+  --accent:#12506b; --accent-soft:#eaf2f5; --ok:#166534; --err:#b42318;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--ink); background:var(--bg);
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px; margin:0 auto; padding:28px 20px 64px}
+header.top{display:flex; align-items:baseline; gap:12px; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:28px}
+header.top h1{font-size:20px; font-weight:700; margin:0; letter-spacing:.2px}
+header.top .sub{color:var(--muted); font-size:13px}
+.card{
+  border:1px solid var(--line); border-radius:var(--radius);
+  padding:22px 24px; background:#fff;
+}
+.status{font-size:16px; font-weight:700; margin:0 0 6px}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)}
+.detail{color:var(--muted); font-size:14px; margin:0}
+h2.sec{font-size:14px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:26px 0 10px}
+ul.preview{list-style:none; margin:0; padding:0}
+ul.preview li{padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; font-size:14px}
+.foot{color:var(--muted); font-size:12px; margin-top:32px}
+@media (max-width:520px){ .wrap{padding:18px 14px 48px} header.top{flex-direction:column; gap:2px} }

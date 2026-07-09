@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alappiac Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Alappiac Dashboard</h1>
+      <span class="sub">BAMOSZ-alapok — élő adat a Supabase-ből</span>
+    </header>
+
+    <div class="card">
+      <p id="status" class="status">Kapcsolódás…</p>
+      <p id="detail" class="detail"></p>
+    </div>
+
+    <h2 class="sec">Ízelítő — top 3 egyéves hozam (aktív alapok)</h2>
+    <ul id="preview" class="preview"></ul>
+
+    <p class="foot">1. lépés: hosztolás + élő adatpróba. A következő lépésben jön a szűrhető fő táblázat.</p>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
