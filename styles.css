@@ -26,3 +26,34 @@ ul.preview{list-style:none; margin:0; padding:0}
 ul.preview li{padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; font-size:14px}
 .foot{color:var(--muted); font-size:12px; margin-top:32px}
 @media (max-width:520px){ .wrap{padding:18px 14px 48px} header.top{flex-direction:column; gap:2px} }
+
+/* ---- Toolbar ---- */
+.toolbar{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px}
+#search{
+  flex:1 1 320px; max-width:520px; font-family:inherit; font-size:14px;
+  padding:10px 12px; border:1px solid var(--line); border-radius:8px; color:var(--ink);
+}
+#search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.summary{color:var(--muted); font-size:13px}
+
+/* ---- Táblázat ---- */
+.tablewrap{border:1px solid var(--line); border-radius:var(--radius); overflow:auto}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:820px}
+thead th{
+  position:sticky; top:0; background:#f7f9fa; color:var(--muted);
+  font-weight:700; text-align:left; padding:11px 12px; border-bottom:1px solid var(--line);
+  white-space:nowrap; cursor:pointer; user-select:none;
+}
+thead th.r{text-align:right}
+tbody td{padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f7f9fa}
+td.r{text-align:right; font-variant-numeric:tabular-nums}
+td.c{text-align:center}
+td.pos{color:#166534}
+td.neg{color:#b42318}
+tbody a{color:var(--accent); text-decoration:none; font-weight:600}
+tbody a:hover{text-decoration:underline}
+
+/* ---- Illikvid kapcsoló ---- */
+.illiqrow{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; margin-top:14px}
