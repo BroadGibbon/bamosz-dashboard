@@ -1,15 +1,23 @@
-// A fő "piac" táblázat: rendezés + keresés, kliensoldalon.
+// Fő "piac" táblázat: szűrők + rendezés + keresés (kliensoldalon).
 const COLS = [
   { key:"name",        label:"Alap",           type:"text", link:true },
   { key:"manager",     label:"Alapkezelő",     type:"text" },
   { key:"category",    label:"Kategória",      type:"text" },
   { key:"currency",    label:"Dev.",           type:"text", center:true },
+  { key:"risk_return", label:"Kock.",          type:"text", center:true },
   { key:"aum_huf",     label:"AUM (Mrd Ft)",   type:"mrd",  num:true },
   { key:"r_1y",        label:"1é hozam",       type:"pct",  num:true, color:true },
   { key:"ytd",         label:"YTD",            type:"pct",  num:true, color:true },
   { key:"vol_1y",      label:"Volatilitás",    type:"pct",  num:true },
   { key:"sharpe_1y",   label:"Sharpe",         type:"num2", num:true },
   { key:"ter",         label:"TER",            type:"pct2", num:true },
+];
+// legördülő szűrők: id -> mező
+const FILTERS = [
+  { id:"f-category", key:"category", num:false },
+  { id:"f-currency", key:"currency", num:false },
+  { id:"f-risk",     key:"risk_return", num:true },
+  { id:"f-manager",  key:"manager", num:false },
 ];
 let RAW = [], VIEW = [];
 let sortKey = "aum_huf", sortDir = -1;
@@ -22,11 +30,23 @@ function cellText(row, c){
   if (c.type==="mrd")  return fmt.mrd(v);
   return fmt.txt(v);
 }
+function populateFilters(){
+  FILTERS.forEach(f=>{
+    const vals = [...new Set(RAW.map(r=>r[f.key]).filter(v=>v!==null&&v!==undefined&&v!==""))];
+    vals.sort((a,b)=> f.num ? (Number(a)-Number(b)) : String(a).localeCompare(String(b),"hu"));
+    const sel = document.getElementById(f.id);
+    sel.innerHTML = `<option value="">Mind</option>` + vals.map(v=>`<option>${v}</option>`).join("");
+    sel.addEventListener("change", applyView);
+  });
+}
 function applyView(){
   const q = (document.getElementById("search").value || "").toLowerCase().trim();
   const showIlliquid = document.getElementById("illiq").checked;
+  const fv = {};
+  FILTERS.forEach(f=> fv[f.key] = document.getElementById(f.id).value);
   VIEW = RAW.filter(r => {
     if (!showIlliquid && r.is_illiquid) return false;
+    for (const f of FILTERS){ if (fv[f.key] !== "" && String(r[f.key]) !== fv[f.key]) return false; }
     if (q && !((r.name||"").toLowerCase().includes(q) || (r.manager||"").toLowerCase().includes(q))) return false;
     return true;
   });
@@ -39,6 +59,12 @@ function applyView(){
   });
   render();
 }
+function resetFilters(){
+  document.getElementById("search").value="";
+  FILTERS.forEach(f=>document.getElementById(f.id).value="");
+  document.getElementById("illiq").checked=false;
+  applyView();
+}
 function render(){
   const thead = document.getElementById("thead");
   thead.innerHTML = "<tr>" + COLS.map(c=>{
@@ -47,7 +73,8 @@ function render(){
   }).join("") + "</tr>";
   thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{
     const k=th.dataset.k;
-    if (k===sortKey) sortDir=-sortDir; else { sortKey=k; sortDir = (k==="name"||k==="manager"||k==="category"||k==="currency")?1:-1; }
+    const textCol = ["name","manager","category","currency","risk_return"].includes(k);
+    if (k===sortKey) sortDir=-sortDir; else { sortKey=k; sortDir = textCol?1:-1; }
     applyView();
   });
   const tb = document.getElementById("tbody");
@@ -57,16 +84,17 @@ function render(){
     const cls = [c.num?"r":"", c.center?"c":"", c.color?pctClass(r[c.key]):""].join(" ").trim();
     return `<td class="${cls}">${inner}</td>`;
   }).join("")+"</tr>").join("");
-  // összegzősáv
   const totAum = VIEW.reduce((s,r)=>s+(r.aum_huf||0),0);
   document.getElementById("summary").textContent =
-    `${VIEW.length} alap megjelenítve • összes AUM: ${fmt.mrd(totAum)} Mrd Ft`;
+    `${VIEW.length} alap • összes AUM: ${fmt.mrd(totAum)} Mrd Ft`;
 }
 async function init(){
   try{
-    RAW = await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,ter,is_illiquid");
+    RAW = await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,ter,is_illiquid");
+    populateFilters();
     document.getElementById("search").addEventListener("input", applyView);
     document.getElementById("illiq").addEventListener("change", applyView);
+    document.getElementById("reset").addEventListener("click", resetFilters);
     applyView();
   }catch(e){
     document.getElementById("summary").textContent = "Hiba: " + e.message;

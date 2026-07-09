@@ -57,3 +57,18 @@ tbody a:hover{text-decoration:underline}
 
 /* ---- Illikvid kapcsoló ---- */
 .illiqrow{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; margin-top:14px}
+
+/* ---- Szűrő-sáv ---- */
+.filters{display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end; margin-bottom:14px}
+.filters label{display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:700}
+.filters select{
+  font-family:inherit; font-size:13px; color:var(--ink); background:#fff;
+  padding:8px 10px; border:1px solid var(--line); border-radius:8px; min-width:150px; max-width:230px;
+}
+.filters select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.filters #reset{
+  font-family:inherit; font-size:13px; color:var(--accent); background:#fff; cursor:pointer;
+  padding:9px 14px; border:1px solid var(--line); border-radius:8px; font-weight:700;
+}
+.filters #reset:hover{background:var(--accent-soft)}
+@media (max-width:520px){ .filters label,.filters select{min-width:0; width:100%} .filters #reset{width:100%} }

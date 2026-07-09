@@ -18,6 +18,14 @@
       <span id="summary" class="summary">Betöltés…</span>
     </div>
 
+    <div class="filters">
+      <label>Kategória<select id="f-category"></select></label>
+      <label>Deviza<select id="f-currency"></select></label>
+      <label>Kockázat<select id="f-risk"></select></label>
+      <label>Alapkezelő<select id="f-manager"></select></label>
+      <button id="reset" type="button">Szűrők törlése</button>
+    </div>
+
     <div class="tablewrap">
       <table id="tbl">
         <thead id="thead"></thead>
@@ -29,7 +37,7 @@
       <input type="checkbox" id="illiq"> Illikvid / megszűnt alapok megjelenítése is
     </label>
 
-    <p class="foot">2. lépés: fő táblázat rendezéssel és kereséssel. Következik: legördülő szűrők és diagramok.</p>
+    <p class="foot">3. lépés: legördülő szűrők. Következik: diagramok (top hozamok, alapkezelői forgalom, Sharpe).</p>
   </div>
 
   <script src="config.js"></script>
