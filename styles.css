@@ -72,3 +72,12 @@ tbody a:hover{text-decoration:underline}
 }
 .filters #reset:hover{background:var(--accent-soft)}
 @media (max-width:520px){ .filters label,.filters select{min-width:0; width:100%} .filters #reset{width:100%} }
+
+/* ---- Táblázat görgetés: kötött magasságú panel, ragadós fejléc + első oszlop ---- */
+.tablewrap{max-height:72vh; -webkit-overflow-scrolling:touch}
+thead th{z-index:2}
+thead th:first-child{left:0; z-index:3; background:#f7f9fa; border-right:1px solid var(--line)}
+tbody td:first-child{
+  position:sticky; left:0; z-index:1; background:#fff; border-right:1px solid var(--line);
+}
+tbody tr:hover td:first-child{background:#f7f9fa}
