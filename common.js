@@ -29,6 +29,7 @@ const fmt = {
   pct(v, d = 1) { return (v === null || v === undefined) ? "–" : (v * 100).toFixed(d) + "%"; },
   num(v, d = 2) { return (v === null || v === undefined) ? "–" : Number(v).toFixed(d); },
   mrd(v) { return (v === null || v === undefined) ? "–" : (v / 1e9).toLocaleString("hu-HU", {maximumFractionDigits:1}); },
+  int(v){ return (v===null||v===undefined)?"–":Math.round(v).toLocaleString("hu-HU"); },
   txt(v) { return (v === null || v === undefined || v === "") ? "–" : v; }
 };
 function pctClass(v){ if(v===null||v===undefined) return ""; return v<0 ? "neg" : (v>0 ? "pos" : ""); }

@@ -26,18 +26,30 @@
       <button id="reset" type="button">Szűrők törlése</button>
     </div>
 
-    <div class="tablewrap">
-      <table id="tbl">
-        <thead id="thead"></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+    <section class="block">
+      <div class="blockhead">
+        <h2 class="sec">Top 20 alap</h2>
+        <label class="rank">Rangsor: <select id="rank"></select></label>
+      </div>
+      <div class="tablewrap">
+        <table id="funds" class="grid"><colgroup id="funds-cg"></colgroup>
+          <thead id="funds-h"></thead><tbody id="funds-b"></tbody></table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead"><h2 class="sec">Top 20 alapkezelő</h2></div>
+      <div class="tablewrap">
+        <table id="mgrs" class="grid"><colgroup id="mgrs-cg"></colgroup>
+          <thead id="mgrs-h"></thead><tbody id="mgrs-b"></tbody></table>
+      </div>
+    </section>
 
     <label class="illiqrow">
       <input type="checkbox" id="illiq"> Illikvid / megszűnt alapok megjelenítése is
     </label>
 
-    <p class="foot">3. lépés: legördülő szűrők. Következik: diagramok (top hozamok, alapkezelői forgalom, Sharpe).</p>
+    <p class="foot">Az oszlopok szélessége a fejléc jobb szélénél húzva átméretezhető (a hosszú nevek „…"-tal rövidülnek).</p>
   </div>
 
   <script src="config.js"></script>
