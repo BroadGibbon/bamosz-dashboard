@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alap összefoglaló</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="backlink" href="index.html">← Vissza az áttekintéshez</a>
+    <header class="top"><h1 id="f-title">Alap összefoglaló</h1><p class="blocknote" id="f-sub"></p></header>
+
+    <section class="block">
+      <div class="blockhead"><h2>Alap adatai</h2></div>
+      <div class="kv" id="f-data"></div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead"><h2>Idősor – utolsó 3 év</h2>
+        <label class="rank">Adat: <select id="f-metric"></select></label>
+      </div>
+      <div class="chartbox tall"><canvas id="f-series"></canvas></div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead"><h2>Kockázat–hozam térkép (azonos kategória, kockázat, deviza)</h2></div>
+      <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam. A kiemelt buborék a jelenlegi alap.</p>
+      <p class="blocknote" id="f-peernote" hidden></p>
+      <div class="chartbox tall"><canvas id="f-peers"></canvas></div>
+    </section>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="fund.js"></script>
+</body>
+</html>

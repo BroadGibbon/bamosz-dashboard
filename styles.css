@@ -122,3 +122,11 @@ tbody tr.sel-row td:first-child{background:#dff3e6 !important; box-shadow:inset 
 /* ===== Diagram alap-magasság ===== */
 .chartbox{height:360px}
 .two-col .chartbox{height:330px}
+
+/* ===== Alap-oldal ===== */
+.backlink{display:inline-block; margin:4px 0 10px; color:var(--mid); font-weight:700; text-decoration:none}
+.backlink:hover{color:var(--dark); text-decoration:underline}
+.kv{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px 22px}
+.kvi{border-bottom:1px solid var(--line); padding-bottom:8px}
+.kv .k{font-size:12px; color:#5a6b6e; margin-bottom:2px}
+.kv .v{font-weight:700; color:var(--dark); font-size:15px}

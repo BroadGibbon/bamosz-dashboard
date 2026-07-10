@@ -10,6 +10,7 @@ let RAW=[]; window.SHOW_ILLIQUID=false;
 let VIEW="a";
 const ELEMENTS_A=[], ELEMENTS_B=[];
 let CATEGORIES=[],CURRENCIES=[],RISKS=[],MANAGERS=[];
+let A7DATA=null;
 let WIDTHS={}; try{ WIDTHS=JSON.parse(localStorage.getItem("colw")||"{}"); }catch(e){}
 
 function cmp(x,y,dir){ if(x==null)return 1; if(y==null)return -1;
@@ -254,6 +255,43 @@ function buildA6(){
   ELEMENTS_A.push(render);
 }
 
+
+// 7) Piac alakulása — teljes piaci AUM vonaldiagram (időszak + kategória szűrő)
+const A7_RANGES=[{m:3,label:"Elmúlt 3 hónap"},{m:6,label:"Elmúlt 6 hónap"},{m:12,label:"Elmúlt 1 év"},{m:36,label:"Elmúlt 3 év"}];
+function buildA7(){
+  const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
+  el("a7-filters").append(fCat.el);
+  const rs=el("a7-range");
+  rs.innerHTML=A7_RANGES.map(o=>`<option value="${o.m}">${o.label}</option>`).join("");
+  rs.value="12"; rs.onchange=render;
+  async function ensure(){
+    if(A7DATA) return;
+    const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
+    A7DATA=await sbGetAll(`v_market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`);
+  }
+  async function render(){
+    const note=el("a7-note");
+    try{ await ensure(); }
+    catch(e){ note.hidden=false; note.textContent='A Piac alakulása nézethez létre kell hozni a v_market_aum_daily nézetet (lásd az SQL lépést).'; if(charts.a7){charts.a7.destroy();charts.a7=null;} return; }
+    note.hidden=true;
+    const months=parseInt(rs.value,10);
+    const cut=new Date(); cut.setMonth(cut.getMonth()-months); const cutS=cut.toISOString().slice(0,10);
+    const sel=fCat.getSet(), perDate={};
+    A7DATA.forEach(r=>{ if(r.obs_date<cutS) return; if(sel.size>0 && !sel.has(String(r.category))) return;
+      perDate[r.obs_date]=(perDate[r.obs_date]||0)+Number(r.aum_huf||0); });
+    const dates=Object.keys(perDate).sort(), vals=dates.map(dt=>perDate[dt]/1e9);
+    if(charts.a7)charts.a7.destroy();
+    charts.a7=new Chart(el("a7-canvas"),{type:"line",
+      data:{labels:dates,datasets:[{label:"Össz piaci AUM (Mrd Ft)",data:vals,
+        borderColor:"#00474F",backgroundColor:"rgba(0,71,79,.12)",fill:true,pointRadius:0,borderWidth:2,tension:.2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{title:{display:true,text:"AUM (Mrd Ft)"}}},
+        plugins:{legend:{display:false},datalabels:{display:false},
+          tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})+" Mrd Ft"}}}}});
+  }
+  ELEMENTS_A.push(render);
+}
+
 // ===================== B NÉZET =====================
 const B7_COLS=[
  {key:"name",label:"Alap",type:"text",link:true,w:190},
@@ -358,7 +396,7 @@ async function init(){
   try{
     RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();
+    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();
     buildB();
     document.querySelectorAll(".viewswitch button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
     const g=el("illiq-global"); g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderActive(); });
