@@ -106,3 +106,19 @@ table.grid th .rz:hover{background:linear-gradient(to right,transparent,rgba(46,
 tbody tr.sel-row td{background:#e9f7ef !important}
 tbody tr.sel-row td:first-child{background:#dff3e6 !important; box-shadow:inset 3px 0 0 var(--vivid)}
 .sw{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; vertical-align:middle}
+
+/* ===== Nézetváltó ===== */
+.viewswitch{display:inline-flex; background:var(--beige); border:1px solid var(--line); border-radius:12px; padding:4px; gap:4px; margin:6px 0 22px; flex-wrap:wrap}
+.viewswitch button{font-family:inherit; font-size:14px; font-weight:700; color:var(--dark); background:transparent;
+  border:none; border-radius:9px; padding:9px 16px; cursor:pointer}
+.viewswitch button.active{background:var(--dark); color:#fff}
+.viewswitch button:not(.active):hover{background:#fff}
+
+/* ===== Kétoszlopos elrendezés (asztali nézet) ===== */
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+.two-col .block{margin-bottom:22px}
+@media (max-width:760px){ .two-col{grid-template-columns:1fr; gap:0} }
+
+/* ===== Diagram alap-magasság ===== */
+.chartbox{height:360px}
+.two-col .chartbox{height:330px}

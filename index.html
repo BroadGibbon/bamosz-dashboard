@@ -6,12 +6,17 @@
   <title>Magyar nyilvános befektetési alapok</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body>
   <div class="wrap">
-    <header class="top">
-      <h1>Magyar nyilvános befektetési alapok</h1>
-    </header>
+    <header class="top"><h1>Magyar nyilvános befektetési alapok</h1></header>
+
+    <!-- Nézetváltó -->
+    <div class="viewswitch">
+      <button type="button" data-view="a" class="active">Befektetési alapok áttekintés</button>
+      <button type="button" data-view="b">GAK alapok peer group</button>
+    </div>
 
     <!-- Alap adatok -->
     <section class="stats">
@@ -21,67 +26,99 @@
       <div class="stat"><div class="stat-n" id="sm-date">–</div><div class="stat-l">Adatok dátuma</div></div>
     </section>
 
-    <!-- 1 -->
-    <section class="block">
-      <div class="blockhead"><h2>Top 15 Alapkezelő AUM szerint</h2></div>
-      <p class="blocknote">Kezelt vagyon (Mrd Ft), alapkategóriánként megbontva.</p>
-      <div class="filters" id="el1-filters"></div>
-      <div class="chartbox tall"><canvas id="el1-canvas"></canvas></div>
-    </section>
+    <!-- ===================== A NÉZET ===================== -->
+    <div id="view-a">
+      <section class="block">
+        <div class="blockhead"><h2>Top 15 Alapkezelő AUM szerint</h2></div>
+        <p class="blocknote">Kezelt vagyon (Mrd Ft), kategóriánként bontva. A jelmagyarázatban a kategóriák ki/be kapcsolhatók; a teljes AUM a sáv jobb végén.</p>
+        <div class="filters" id="a1-filters"></div>
+        <div class="chartbox tall"><canvas id="a1-canvas"></canvas></div>
+      </section>
 
-    <!-- 2 -->
-    <section class="block">
-      <div class="blockhead">
-        <h2>Top 20 Alap</h2>
-        <label class="rank">Rangsor: <select id="el2-rank"></select></label>
-      </div>
-      <div class="filters" id="el2-filters"></div>
-      <div class="tablewrap">
-        <table id="el2" class="grid"><colgroup id="el2-cg"></colgroup>
-          <thead id="el2-h"></thead><tbody id="el2-b"></tbody></table>
-      </div>
-    </section>
-
-    <!-- 3 -->
-    <section class="block">
-      <div class="blockhead">
-        <h2>Top 15 Alapkezelő</h2>
-        <label class="rank">Rangsor: <select id="el3-rank"></select></label>
-      </div>
-      <div class="filters" id="el3-filters"></div>
-      <div class="chartbox tall"><canvas id="el3-canvas"></canvas></div>
-    </section>
-
-    <!-- 4 -->
-    <section class="block">
-      <div class="blockhead"><h2>Kockázat–hozam térkép</h2></div>
-      <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam, szín = alapkezelő. (Egy kategória egyszerre.)</p>
-      <div class="filters" id="el4-filters"></div>
-      <div class="chartbox tall"><canvas id="el4-canvas"></canvas></div>
-    </section>
-
-
-    <!-- 5 -->
-    <section class="block">
-      <div class="blockhead"><h2>GAK alapok teljesítménye</h2></div>
-      <div class="el5-selects">
-        <label class="rank">Gránit alap: <select id="el5-fund"></select></label>
-        <label class="rank">Összevetés: <select id="el5-metric"></select></label>
-      </div>
-      <div class="el5-tile" id="el5-tile"></div>
-      <p class="blocknote">A megjelenített alapok a kiválasztott alappal azonos kategóriájúak, kockázatúak és devizájúak: az összevetési szempont szerinti top 3 + a kiválasztott Gránit alap.</p>
-      <div class="tablewrap">
-        <table id="el5" class="grid"><colgroup id="el5-cg"></colgroup>
-          <thead id="el5-h"></thead><tbody id="el5-b"></tbody></table>
-      </div>
-      <div class="el5-charts">
-        <div>
-          <div class="chartbox" style="height:400px"><canvas id="el5-radar"></canvas></div>
-          <p class="blocknote" style="text-align:center">Kifelé = jobb (a TER fordítva); a megjelenített alapok min–max tartományára normálva.</p>
+      <section class="block">
+        <div class="blockhead">
+          <h2>Top 20 Alap</h2>
+          <label class="rank">Rangsor: <select id="a2-rank"></select></label>
         </div>
-        <div class="chartbox" style="height:400px"><canvas id="el5-bar"></canvas></div>
+        <div class="filters" id="a2-filters"></div>
+        <div class="tablewrap"><table id="a2" class="grid"><colgroup id="a2-cg"></colgroup>
+          <thead id="a2-h"></thead><tbody id="a2-b"></tbody></table></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead">
+          <h2>Top 15 Alapkezelő</h2>
+          <label class="rank">Rangsor: <select id="a3-rank"></select></label>
+        </div>
+        <div class="filters" id="a3-filters"></div>
+        <div class="chartbox tall"><canvas id="a3-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Kockázat–hozam térkép</h2></div>
+        <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam, szín = alapkezelő (a jelmagyarázatban ki/be kapcsolható). Egy kategória egyszerre.</p>
+        <div class="filters" id="a4-filters"></div>
+        <div class="chartbox tall"><canvas id="a4-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>AUM megoszlása kategóriánként</h2></div>
+        <div class="filters" id="a5-filters"></div>
+        <div class="chartbox"><canvas id="a5-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Legnagyobb nettó forgalom – 30 nap (Mrd Ft)</h2></div>
+        <p class="blocknote">A legnagyobb nettó be- és kiáramlások az elmúlt 30 napban, forintra váltva.</p>
+        <div class="filters" id="a6-filters"></div>
+        <div class="chartbox tall"><canvas id="a6-canvas"></canvas></div>
+      </section>
+    </div>
+
+    <!-- ===================== B NÉZET ===================== -->
+    <div id="view-b" hidden>
+      <section class="block">
+        <div class="blockhead"><h2>GAK Alap választó</h2></div>
+        <div class="el5-selects">
+          <label class="rank">Gránit alap (sorozat): <select id="b6-fund"></select></label>
+        </div>
+        <div class="el5-tile" id="b6-tile"></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead">
+          <h2>Összefoglaló táblázat</h2>
+          <label class="rank">Rendezés: <select id="b7-sort"></select></label>
+        </div>
+        <div class="tablewrap"><table id="b7" class="grid"><colgroup id="b7-cg"></colgroup>
+          <thead id="b7-h"></thead><tbody id="b7-b"></tbody></table></div>
+      </section>
+
+      <div class="two-col">
+        <section class="block"><div class="blockhead"><h2>1 éves hozam</h2></div>
+          <div class="chartbox"><canvas id="b8-canvas"></canvas></div></section>
+        <section class="block"><div class="blockhead"><h2>Sharpe</h2></div>
+          <div class="chartbox"><canvas id="b9-canvas"></canvas></div></section>
       </div>
-    </section>
+      <div class="two-col">
+        <section class="block"><div class="blockhead"><h2>Sortino</h2></div>
+          <div class="chartbox"><canvas id="b10-canvas"></canvas></div></section>
+        <section class="block"><div class="blockhead"><h2>TER</h2></div>
+          <div class="chartbox"><canvas id="b11-canvas"></canvas></div></section>
+      </div>
+
+      <section class="block">
+        <div class="blockhead"><h2>Forgalmazás (utolsó 3 hónap)</h2></div>
+        <p class="blocknote">Napi forgalmazási érték a peer group alapjaira; alaponként külön színnel.</p>
+        <div class="chartbox tall"><canvas id="b12-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Hozam–kockázat térkép</h2></div>
+        <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam, minden alap külön színnel.</p>
+        <div class="chartbox tall"><canvas id="b13-canvas"></canvas></div>
+      </section>
+    </div>
 
     <!-- Globális illikvid kapcsoló -->
     <label class="illiq-global">
@@ -93,15 +130,16 @@
     <section class="methods">
       <h3>A mutatók számítása</h3>
       <ul>
-        <li><b>AUM (Mrd Ft):</b> az alap legfrissebb nettó eszközértéke, az adott napi ECB-árfolyammal forintra váltva.</li>
-        <li><b>1 éves / YTD hozam:</b> az egy jegyre jutó árfolyam változása 1 évre visszatekintve, illetve az idei év eleje óta (tizedes törtben tárolva).</li>
-        <li><b>Volatilitás:</b> a napi hozamok szórása gördülő 1 éves ablakon, évesítve (×√252); legalább 200 napi adatból.</li>
-        <li><b>Sharpe:</b> (1 éves hozam − kockázatmentes ráta) / 1 éves volatilitás. A kockázatmentes ráta az alap devizája szerint (HUF: ÁKK 12 hó; EUR: ECB 1 év; USD: US Treasury 1 év), a legfrissebb elérhető értékkel.</li>
+        <li><b>AUM (Mrd Ft):</b> legfrissebb nettó eszközérték, az adott napi ECB-árfolyammal forintra váltva.</li>
+        <li><b>1 éves / YTD hozam:</b> az egy jegyre jutó árfolyam változása 1 évre visszatekintve, illetve az év eleje óta.</li>
+        <li><b>Volatilitás:</b> a napi hozamok szórása gördülő 1 éves ablakon, évesítve (×√252), min. 200 napból.</li>
+        <li><b>Sharpe:</b> (1 éves hozam − kockázatmentes ráta) / volatilitás. A kockázatmentes ráta devizánként (HUF: ÁKK 12 hó, EUR: ECB 1 év, USD: US Treasury 1 év), a legfrissebb elérhető értékkel.</li>
         <li><b>Sortino:</b> mint a Sharpe, de a nevezőben a lefelé-szórás (csak a 0 alatti napi hozamok, évesítve).</li>
-        <li><b>Drawdown:</b> a legnagyobb csúcs→mélypont esés az elmúlt 5 évben (negatív szám). <b>DD duration:</b> a csúcstól a teljes helyreállásig eltelt napok (ha még nem állt helyre: „folyamatban").</li>
-        <li><b>TER:</b> teljes költséghányados az MNB éves kimutatásából; alapkezelőnként AUM-súlyozott átlag.</li>
-        <li><b>Kockázat:</b> a BAMOSZ hozam/kockázat mutató (1–7), zöldtől pirosig színezve.</li>
-        <li><b>Illikvid/megszűnt:</b> alapból rejtve. Akkor jelöljük, ha az alap &gt;30 napja nem közöl adatot, vagy az elmúlt 180 nap forgalmi napjainak &lt;10%-án volt nettó forgalom.</li>
+        <li><b>Drawdown:</b> a legnagyobb csúcs→mélypont esés 5 évre. <b>DD duration:</b> a csúcstól a teljes helyreállásig eltelt napok (ha még nem: „folyamatban").</li>
+        <li><b>TER:</b> teljes költséghányados az MNB éves kimutatásából.</li>
+        <li><b>Kockázat:</b> BAMOSZ hozam/kockázat mutató (1–7), zöldtől pirosig színezve.</li>
+        <li><b>Peer group:</b> az egyes alapok a hozzájuk rendelt Gránit alap összehasonlító csoportjába tartoznak.</li>
+        <li><b>Illikvid/megszűnt:</b> alapból rejtve; jelölve, ha &gt;30 napja nincs adat, vagy az utóbbi 180 nap forgalmi napjainak &lt;10%-án volt nettó forgalom.</li>
       </ul>
     </section>
   </div>
