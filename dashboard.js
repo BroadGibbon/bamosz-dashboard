@@ -279,7 +279,9 @@ function buildA7(){
     const sel=fCat.getSet(), perDate={};
     A7DATA.forEach(r=>{ if(r.obs_date<cutS) return; if(sel.size>0 && !sel.has(String(r.category))) return;
       perDate[r.obs_date]=(perDate[r.obs_date]||0)+Number(r.aum_huf||0); });
-    const dates=Object.keys(perDate).sort(), vals=dates.map(dt=>perDate[dt]/1e9);
+    const allDates=Object.keys(perDate).sort();
+    const dates=allDates.slice(0, Math.max(0, allDates.length-5)); // utolsó 5 nap levágva (hiányos adat)
+    const vals=dates.map(dt=>perDate[dt]/1e9);
     if(charts.a7)charts.a7.destroy();
     charts.a7=new Chart(el("a7-canvas"),{type:"line",
       data:{labels:dates,datasets:[{label:"Össz piaci AUM (Mrd Ft)",data:vals,
