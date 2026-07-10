@@ -226,15 +226,117 @@ function buildEl4(){
   ELEMENTS.push(render);
 }
 
+
+// ===== 5) GAK alapok teljesítménye — táblázat + radar + bar =====
+const E5_COLS=[
+ {key:"name",label:"Alap neve",type:"text",link:true,w:210},
+ {key:"manager",label:"Alapkezelő",type:"text",w:150},
+ {key:"aum_huf",label:"AUM (Mrd Ft)",type:"mrd",num:true,w:110},
+ {key:"r_1y",label:"1é hozam",type:"pct",num:true,color:true,w:86},
+ {key:"ytd",label:"YTD",type:"pct",num:true,color:true,w:76},
+ {key:"vol_1y",label:"Volatilitás",type:"pct",num:true,w:94},
+ {key:"sharpe_1y",label:"Sharpe",type:"num2",num:true,w:76},
+ {key:"sortino_1y",label:"Sortino",type:"num2",num:true,w:78},
+ {key:"ter",label:"TER",type:"pct2",num:true,w:70},
+ {key:"max_drawdown",label:"Drawdown",type:"pct",num:true,color:true,w:94},
+ {key:"recovery_days",label:"DD duration",type:"days",num:true,w:112},
+];
+const E5_METRIC=[
+ {key:"r_1y",label:"1 éves hozam"},
+ {key:"sharpe_1y",label:"Sharpe"},
+ {key:"sortino_1y",label:"Sortino"},
+ {key:"aum_huf",label:"AUM"},
+ {key:"ytd",label:"YTD hozam"},
+ {key:"turnover_cum_30d_huf",label:"Elmúlt 30 nap forgalma"},
+];
+function buildEl5(){
+  const isGranit=r=>{const m=(r.manager||"").toLowerCase(); return m.includes("gránit")||m.includes("granit");};
+  const gsorted=RAW.filter(isGranit).sort((a,b)=>String(a.name).localeCompare(String(b.name),"hu"));
+  const fundSel=document.getElementById("el5-fund");
+  fundSel.innerHTML=gsorted.map(r=>`<option value="${r.isin}">${r.name}</option>`).join("");
+  const def=gsorted.find(r=>/harm[oó]nia/i.test(r.name))||gsorted[0];
+  if(def) fundSel.value=def.isin;
+  const metricSel=document.getElementById("el5-metric");
+  metricSel.innerHTML=E5_METRIC.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
+  let metricKey=E5_METRIC[0].key; metricSel.value=metricKey;
+  fundSel.onchange=render; metricSel.onchange=()=>{metricKey=metricSel.value; render();};
+  let radar=null, bar=null;
+  function render(){
+    const sel=RAW.find(r=>r.isin===fundSel.value);
+    const tile=document.getElementById("el5-tile");
+    if(!sel){ tile.textContent="Nincs Gránit alap az adatban."; return; }
+    tile.innerHTML=`<span><b>Kategória:</b> ${fmt.txt(sel.category)}</span>`+
+                   `<span><b>Kockázat:</b> ${riskCircle(sel.risk_return)}</span>`+
+                   `<span><b>Deviza:</b> ${fmt.txt(sel.currency)}</span>`;
+    const base=RAW.filter(r=> window.SHOW_ILLIQUID || !r.is_illiquid);
+    let peers=base.filter(r=> r.category===sel.category && String(r.risk_return)===String(sel.risk_return) && r.currency===sel.currency);
+    peers=[...peers].sort((a,b)=>cmp(a[metricKey],b[metricKey],-1)).slice(0,3);
+    const shown=peers.slice();
+    if(!shown.some(r=>r.isin===sel.isin)) shown.push(sel);
+    const colors=shown.map((_,i)=>colorFor(i));
+    renderTable(shown,colors,sel);
+    renderRadar(shown,colors);
+    renderBar(shown,colors);
+  }
+  function renderTable(shown,colors,sel){
+    document.getElementById("el5-cg").innerHTML=E5_COLS.map(c=>`<col style="width:${(WIDTHS[c.key]||c.w)}px">`).join("");
+    document.getElementById("el5-h").innerHTML="<tr>"+E5_COLS.map(c=>`<th class="${c.num?'r':''}">${c.label}<span class="rz"></span></th>`).join("")+"</tr>";
+    document.getElementById("el5-b").innerHTML=shown.map((r,i)=>{
+      const selCls=r.isin===sel.isin?' class="sel-row"':'';
+      return "<tr"+selCls+">"+E5_COLS.map(c=>{
+        let inner=tcell(r,c);
+        if(c.link) inner=`<span class="sw" style="background:${colors[i]}"></span><a href="fund.html?isin=${encodeURIComponent(r.isin)}" title="${(r.name||'').replace(/"/g,'')}">${inner}</a>`;
+        const cls=[c.num?"r":"",c.color?pctClass(r[c.key]):""].join(" ").trim();
+        return `<td class="${cls}">${inner}</td>`;
+      }).join("")+"</tr>";
+    }).join("");
+    attachResize("el5",E5_COLS);
+  }
+  function renderRadar(shown,colors){
+    const axes=[{k:"sharpe_1y",l:"Sharpe",inv:false},{k:"sortino_1y",l:"Sortino",inv:false},
+                {k:"ter",l:"TER",inv:true},{k:"aum_huf",l:"AUM",inv:false}];
+    const ranges=axes.map(a=>{const v=shown.map(r=>r[a.k]).filter(x=>x!=null);
+      return {a,mn:Math.min(...v),mx:Math.max(...v)};});
+    const datasets=shown.map((r,i)=>({
+      label:r.name,
+      data:ranges.map(({a,mn,mx})=>{let v=r[a.k]; if(v==null) return 0;
+        let t=(mx===mn)?0.5:(v-mn)/(mx-mn); if(a.inv) t=1-t; return Math.round(t*100);}),
+      borderColor:colors[i], backgroundColor:colors[i]+"33", pointBackgroundColor:colors[i], borderWidth:2
+    }));
+    if(radar) radar.destroy();
+    radar=new Chart(document.getElementById("el5-radar"),{
+      type:"radar", data:{labels:axes.map(a=>a.l),datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{r:{suggestedMin:0,suggestedMax:100,ticks:{display:false}}},
+        plugins:{legend:{position:"bottom"}}}
+    });
+  }
+  function renderBar(shown,colors){
+    if(bar) bar.destroy();
+    bar=new Chart(document.getElementById("el5-bar"),{
+      type:"bar",
+      data:{labels:shown.map(r=>r.name),
+        datasets:[{label:"Elmúlt 30 nap forgalma (Mrd Ft)",
+          data:shown.map(r=> r.turnover_cum_30d_huf!=null? r.turnover_cum_30d_huf/1e9 : null),
+          backgroundColor:colors}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{title:{display:true,text:"Forgalom (Mrd Ft)"}}},
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>fmt.mrd(shown[c.dataIndex].turnover_cum_30d_huf)+" Mrd Ft"}}}}
+    });
+  }
+  ELEMENTS.push(render);
+}
+
 // ===== összehangolás =====
 function renderAll(){ renderSummary(); ELEMENTS.forEach(fn=>fn()); }
 async function init(){
   try{
-    RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date");
+    RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf");
     const uniq=k=>[...new Set(RAW.map(r=>r[k]).filter(v=>v!=null&&v!==""))];
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency");
     RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildEl1(); buildEl2(); buildEl3(); buildEl4();
+    buildEl1(); buildEl2(); buildEl3(); buildEl4(); buildEl5();
     const g=document.getElementById("illiq-global");
     g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderAll(); });
     renderAll();

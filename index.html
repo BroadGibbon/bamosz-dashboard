@@ -60,6 +60,29 @@
       <div class="chartbox tall"><canvas id="el4-canvas"></canvas></div>
     </section>
 
+
+    <!-- 5 -->
+    <section class="block">
+      <div class="blockhead"><h2>GAK alapok teljesítménye</h2></div>
+      <div class="el5-selects">
+        <label class="rank">Gránit alap: <select id="el5-fund"></select></label>
+        <label class="rank">Összevetés: <select id="el5-metric"></select></label>
+      </div>
+      <div class="el5-tile" id="el5-tile"></div>
+      <p class="blocknote">A megjelenített alapok a kiválasztott alappal azonos kategóriájúak, kockázatúak és devizájúak: az összevetési szempont szerinti top 3 + a kiválasztott Gránit alap.</p>
+      <div class="tablewrap">
+        <table id="el5" class="grid"><colgroup id="el5-cg"></colgroup>
+          <thead id="el5-h"></thead><tbody id="el5-b"></tbody></table>
+      </div>
+      <div class="el5-charts">
+        <div>
+          <div class="chartbox" style="height:400px"><canvas id="el5-radar"></canvas></div>
+          <p class="blocknote" style="text-align:center">Kifelé = jobb (a TER fordítva); a megjelenített alapok min–max tartományára normálva.</p>
+        </div>
+        <div class="chartbox" style="height:400px"><canvas id="el5-bar"></canvas></div>
+      </div>
+    </section>
+
     <!-- Globális illikvid kapcsoló -->
     <label class="illiq-global">
       <input type="checkbox" id="illiq-global">
