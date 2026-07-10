@@ -1,101 +1,97 @@
 :root{
-  --bg:#ffffff; --ink:#16202a; --muted:#5b6b7a; --line:#e6eaee;
-  --accent:#12506b; --accent-soft:#eaf2f5; --ok:#166534; --err:#b42318;
-  --radius:12px;
+  --dark:#00474F; --mid:#2E8B6B; --vivid:#00E676;
+  --beige:#EDE0D8; --beige2:#F7F4F1; --ink:#0D1B1E;
+  --muted:#5c6b70; --line:#e2ddd7; --card:#ffffff;
+  --pos:#0f7a3d; --neg:#c62828; --radius:14px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  font-family:Arial,Helvetica,sans-serif;
-  color:var(--ink); background:var(--bg);
-  line-height:1.5; -webkit-font-smoothing:antialiased;
+  font-family:Calibri,"Segoe UI",Candara,Optima,sans-serif;
+  background:var(--beige2); color:var(--ink); line-height:1.5;
 }
-.wrap{max-width:1160px; margin:0 auto; padding:28px 20px 64px}
-header.top{display:flex; align-items:baseline; gap:12px; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:28px}
-header.top h1{font-size:20px; font-weight:700; margin:0; letter-spacing:.2px}
-header.top .sub{color:var(--muted); font-size:13px}
-.card{
-  border:1px solid var(--line); border-radius:var(--radius);
-  padding:22px 24px; background:#fff;
-}
-.status{font-size:16px; font-weight:700; margin:0 0 6px}
-.status.ok{color:var(--ok)} .status.err{color:var(--err)}
-.detail{color:var(--muted); font-size:14px; margin:0}
-h2.sec{font-size:14px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:26px 0 10px}
-ul.preview{list-style:none; margin:0; padding:0}
-ul.preview li{padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; font-size:14px}
-.foot{color:var(--muted); font-size:12px; margin-top:32px}
-@media (max-width:520px){ .wrap{padding:18px 14px 48px} header.top{flex-direction:column; gap:2px} }
+.wrap{max-width:1180px; margin:0 auto; padding:26px 18px 70px}
+header.top h1{color:var(--dark); font-size:27px; font-weight:700; margin:0 0 4px; letter-spacing:.2px}
 
-/* ---- Toolbar ---- */
-.toolbar{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px}
-#search{
-  flex:1 1 320px; max-width:520px; font-family:inherit; font-size:14px;
-  padding:10px 12px; border:1px solid var(--line); border-radius:8px; color:var(--ink);
-}
-#search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
-.summary{color:var(--muted); font-size:13px}
+/* ===== Alap adatok ===== */
+.stats{display:flex; flex-wrap:wrap; gap:14px; margin:18px 0 30px}
+.stat{flex:1 1 180px; background:var(--card); border:1px solid var(--line); border-left:5px solid var(--mid);
+  border-radius:var(--radius); padding:16px 18px}
+.stat-n{font-size:26px; font-weight:700; color:var(--dark)}
+.stat-l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px}
 
-/* ---- Táblázat ---- */
-.tablewrap{border:1px solid var(--line); border-radius:var(--radius); overflow:auto}
-table{border-collapse:collapse; width:100%; font-size:13px; min-width:820px}
-thead th{
-  position:sticky; top:0; background:#f7f9fa; color:var(--muted);
-  font-weight:700; text-align:left; padding:11px 12px; border-bottom:1px solid var(--line);
-  white-space:nowrap; cursor:pointer; user-select:none;
+/* ===== Blokkok ===== */
+.block{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 22px; margin-bottom:22px}
+.blockhead{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap}
+.block h2{color:var(--dark); font-size:19px; font-weight:700; margin:0}
+.blocknote{color:var(--muted); font-size:13px; margin:4px 0 0}
+.rank{font-size:13px; color:var(--muted); font-weight:700; display:flex; align-items:center; gap:8px}
+.rank select, .ms-btn{
+  font-family:inherit; font-size:13px; color:var(--ink); background:#fff;
+  padding:8px 12px; border:1px solid var(--line); border-radius:9px; cursor:pointer;
 }
-thead th.r{text-align:right}
-tbody td{padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:#f7f9fa}
+.rank select:focus{outline:none; border-color:var(--mid); box-shadow:0 0 0 3px rgba(46,139,107,.18)}
+
+/* ===== Szűrők (többszörös választó) ===== */
+.filters{display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 6px}
+.ms{position:relative}
+.ms-btn b{font-weight:700; color:var(--dark)}
+.ms-btn:hover{border-color:var(--mid)}
+.ms-panel{
+  position:absolute; z-index:40; top:calc(100% + 6px); left:0; min-width:220px; max-height:300px; overflow:auto;
+  background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.12); padding:6px;
+}
+.ms-opt{display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:7px; font-size:13px; cursor:pointer}
+.ms-opt:hover{background:var(--beige2)}
+.ms-opt input{accent-color:var(--mid)}
+.ms-all{font-weight:700; color:var(--dark); border-bottom:1px solid var(--line); margin-bottom:4px; border-radius:0}
+
+/* ===== Kockázati kör ===== */
+.risk-c{display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:50%; font-size:12px; font-weight:700}
+
+/* ===== Diagramok ===== */
+.chartbox{position:relative; width:100%; margin-top:8px}
+.chartbox.tall{height:560px}
+@media (max-width:600px){ .chartbox.tall{height:460px} }
+
+/* ===== Táblázat ===== */
+.tablewrap{border:1px solid var(--line); border-radius:12px; overflow:auto; max-height:72vh;
+  -webkit-overflow-scrolling:touch; margin-top:10px}
+table.grid{table-layout:fixed; border-collapse:collapse; width:100%; font-size:13px; min-width:900px}
+table.grid th, table.grid td{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  padding:10px 12px; border-bottom:1px solid var(--line)}
+table.grid th{position:sticky; top:0; z-index:2; background:var(--beige); color:var(--dark);
+  font-weight:700; text-align:left; cursor:pointer; user-select:none; padding-right:14px}
+table.grid th.r{text-align:right} table.grid th.c{text-align:center}
+table.grid th:first-child{left:0; z-index:3; background:var(--beige); border-right:1px solid var(--line)}
+table.grid td:first-child{position:sticky; left:0; z-index:1; background:#fff; border-right:1px solid var(--line)}
+tbody tr:hover td{background:#fbf9f7}
+tbody tr:hover td:first-child{background:#f3efeb}
 td.r{text-align:right; font-variant-numeric:tabular-nums}
 td.c{text-align:center}
-td.pos{color:#166534}
-td.neg{color:#b42318}
-tbody a{color:var(--accent); text-decoration:none; font-weight:600}
-tbody a:hover{text-decoration:underline}
+td.pos{color:var(--pos)} td.neg{color:var(--neg)}
+tbody a{color:var(--dark); text-decoration:none; font-weight:700}
+tbody a:hover{color:var(--mid); text-decoration:underline}
+table.grid th .rz{position:absolute; top:0; right:0; height:100%; width:10px; cursor:col-resize; touch-action:none; user-select:none}
+table.grid th .rz:hover{background:linear-gradient(to right,transparent,rgba(46,139,107,.25))}
 
-/* ---- Illikvid kapcsoló ---- */
-.illiqrow{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; margin-top:14px}
+/* ===== Globális illikvid kapcsoló ===== */
+.illiq-global{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line);
+  border-radius:12px; padding:14px 18px; font-size:14px; font-weight:700; color:var(--dark); margin:10px 0 26px}
+.illiq-global input{width:18px; height:18px; accent-color:var(--mid)}
 
-/* ---- Szűrő-sáv ---- */
-.filters{display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end; margin-bottom:14px}
-.filters label{display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:700}
-.filters select{
-  font-family:inherit; font-size:13px; color:var(--ink); background:#fff;
-  padding:8px 10px; border:1px solid var(--line); border-radius:8px; min-width:150px; max-width:230px;
+/* ===== Mutatók leírása ===== */
+.methods{color:var(--muted); font-size:13px}
+.methods h3{color:var(--dark); font-size:15px; margin:0 0 10px}
+.methods ul{margin:0; padding-left:18px}
+.methods li{margin-bottom:6px}
+.methods b{color:var(--ink)}
+
+@media (max-width:600px){
+  header.top h1{font-size:22px}
+  .block{padding:16px 14px}
+  .filters .ms{flex:1 1 100%}
+  .ms-btn{width:100%; text-align:left}
 }
-.filters select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
-.filters #reset{
-  font-family:inherit; font-size:13px; color:var(--accent); background:#fff; cursor:pointer;
-  padding:9px 14px; border:1px solid var(--line); border-radius:8px; font-weight:700;
-}
-.filters #reset:hover{background:var(--accent-soft)}
-@media (max-width:520px){ .filters label,.filters select{min-width:0; width:100%} .filters #reset{width:100%} }
-
-/* ---- Táblázat görgetés: kötött magasságú panel, ragadós fejléc + első oszlop ---- */
-.tablewrap{max-height:72vh; -webkit-overflow-scrolling:touch}
-thead th{z-index:2}
-thead th:first-child{left:0; z-index:3; background:#f7f9fa; border-right:1px solid var(--line)}
-tbody td:first-child{
-  position:sticky; left:0; z-index:1; background:#fff; border-right:1px solid var(--line);
-}
-tbody tr:hover td:first-child{background:#f7f9fa}
-
-/* ---- Rács: fix elrendezés + levágott hosszú szöveg ---- */
-table.grid{table-layout:fixed}
-table.grid th, table.grid td{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-table.grid th{position:sticky; top:0; padding-right:14px}
-table.grid th .rz{
-  position:absolute; top:0; right:0; height:100%; width:10px;
-  cursor:col-resize; touch-action:none; user-select:none;
-}
-table.grid th .rz:hover{background:linear-gradient(to right, transparent, var(--accent-soft))}
-
-/* blokkok */
-.block{margin:6px 0 22px}
-.blockhead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:22px 0 8px}
-.blockhead .sec{margin:0}
-.rank{font-size:12px; color:var(--muted); font-weight:700; display:flex; align-items:center; gap:8px}
-.rank select{font-family:inherit; font-size:13px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:#fff}
-.rank select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}

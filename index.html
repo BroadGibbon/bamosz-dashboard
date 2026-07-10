@@ -3,57 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Alappiac Dashboard</title>
+  <title>Magyar nyilvános befektetési alapok</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
   <div class="wrap">
     <header class="top">
-      <h1>Alappiac Dashboard</h1>
-      <span class="sub">BAMOSZ-alapok — piaci áttekintés</span>
+      <h1>Magyar nyilvános befektetési alapok</h1>
     </header>
 
-    <div class="toolbar">
-      <input id="search" type="text" placeholder="Keresés alap vagy alapkezelő nevére…" autocomplete="off">
-      <span id="summary" class="summary">Betöltés…</span>
-    </div>
+    <!-- Alap adatok -->
+    <section class="stats">
+      <div class="stat"><div class="stat-n" id="sm-funds">–</div><div class="stat-l">Alap</div></div>
+      <div class="stat"><div class="stat-n" id="sm-mgrs">–</div><div class="stat-l">Alapkezelő</div></div>
+      <div class="stat"><div class="stat-n" id="sm-aum">–</div><div class="stat-l">Összes AUM (Mrd Ft)</div></div>
+      <div class="stat"><div class="stat-n" id="sm-date">–</div><div class="stat-l">Adatok dátuma</div></div>
+    </section>
 
-    <div class="filters">
-      <label>Kategória<select id="f-category"></select></label>
-      <label>Deviza<select id="f-currency"></select></label>
-      <label>Kockázat<select id="f-risk"></select></label>
-      <label>Alapkezelő<select id="f-manager"></select></label>
-      <button id="reset" type="button">Szűrők törlése</button>
-    </div>
+    <!-- 1 -->
+    <section class="block">
+      <div class="blockhead"><h2>Top 15 Alapkezelő AUM szerint</h2></div>
+      <p class="blocknote">Kezelt vagyon (Mrd Ft), alapkategóriánként megbontva.</p>
+      <div class="filters" id="el1-filters"></div>
+      <div class="chartbox tall"><canvas id="el1-canvas"></canvas></div>
+    </section>
 
+    <!-- 2 -->
     <section class="block">
       <div class="blockhead">
-        <h2 class="sec">Top 20 alap</h2>
-        <label class="rank">Rangsor: <select id="rank"></select></label>
+        <h2>Top 20 Alap</h2>
+        <label class="rank">Rangsor: <select id="el2-rank"></select></label>
       </div>
+      <div class="filters" id="el2-filters"></div>
       <div class="tablewrap">
-        <table id="funds" class="grid"><colgroup id="funds-cg"></colgroup>
-          <thead id="funds-h"></thead><tbody id="funds-b"></tbody></table>
+        <table id="el2" class="grid"><colgroup id="el2-cg"></colgroup>
+          <thead id="el2-h"></thead><tbody id="el2-b"></tbody></table>
       </div>
     </section>
 
+    <!-- 3 -->
     <section class="block">
-      <div class="blockhead"><h2 class="sec">Top 20 alapkezelő</h2></div>
-      <div class="tablewrap">
-        <table id="mgrs" class="grid"><colgroup id="mgrs-cg"></colgroup>
-          <thead id="mgrs-h"></thead><tbody id="mgrs-b"></tbody></table>
+      <div class="blockhead">
+        <h2>Top 15 Alapkezelő</h2>
+        <label class="rank">Rangsor: <select id="el3-rank"></select></label>
       </div>
+      <div class="filters" id="el3-filters"></div>
+      <div class="chartbox tall"><canvas id="el3-canvas"></canvas></div>
     </section>
 
-    <label class="illiqrow">
-      <input type="checkbox" id="illiq"> Illikvid / megszűnt alapok megjelenítése is
+    <!-- 4 -->
+    <section class="block">
+      <div class="blockhead"><h2>Kockázat–hozam térkép</h2></div>
+      <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam, szín = alapkezelő. (Egy kategória egyszerre.)</p>
+      <div class="filters" id="el4-filters"></div>
+      <div class="chartbox tall"><canvas id="el4-canvas"></canvas></div>
+    </section>
+
+    <!-- Globális illikvid kapcsoló -->
+    <label class="illiq-global">
+      <input type="checkbox" id="illiq-global">
+      Illikvid / megszűnt alapok megjelenítése is (az egész oldalra hat)
     </label>
 
-    <p class="foot">Az oszlopok szélessége a fejléc jobb szélénél húzva átméretezhető (a hosszú nevek „…"-tal rövidülnek).</p>
+    <!-- Mutatók leírása -->
+    <section class="methods">
+      <h3>A mutatók számítása</h3>
+      <ul>
+        <li><b>AUM (Mrd Ft):</b> az alap legfrissebb nettó eszközértéke, az adott napi ECB-árfolyammal forintra váltva.</li>
+        <li><b>1 éves / YTD hozam:</b> az egy jegyre jutó árfolyam változása 1 évre visszatekintve, illetve az idei év eleje óta (tizedes törtben tárolva).</li>
+        <li><b>Volatilitás:</b> a napi hozamok szórása gördülő 1 éves ablakon, évesítve (×√252); legalább 200 napi adatból.</li>
+        <li><b>Sharpe:</b> (1 éves hozam − kockázatmentes ráta) / 1 éves volatilitás. A kockázatmentes ráta az alap devizája szerint (HUF: ÁKK 12 hó; EUR: ECB 1 év; USD: US Treasury 1 év), a legfrissebb elérhető értékkel.</li>
+        <li><b>Sortino:</b> mint a Sharpe, de a nevezőben a lefelé-szórás (csak a 0 alatti napi hozamok, évesítve).</li>
+        <li><b>Drawdown:</b> a legnagyobb csúcs→mélypont esés az elmúlt 5 évben (negatív szám). <b>DD duration:</b> a csúcstól a teljes helyreállásig eltelt napok (ha még nem állt helyre: „folyamatban").</li>
+        <li><b>TER:</b> teljes költséghányados az MNB éves kimutatásából; alapkezelőnként AUM-súlyozott átlag.</li>
+        <li><b>Kockázat:</b> a BAMOSZ hozam/kockázat mutató (1–7), zöldtől pirosig színezve.</li>
+        <li><b>Illikvid/megszűnt:</b> alapból rejtve. Akkor jelöljük, ha az alap &gt;30 napja nem közöl adatot, vagy az elmúlt 180 nap forgalmi napjainak &lt;10%-án volt nettó forgalom.</li>
+      </ul>
+    </section>
   </div>
 
   <script src="config.js"></script>
   <script src="common.js"></script>
-  <script src="market.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
