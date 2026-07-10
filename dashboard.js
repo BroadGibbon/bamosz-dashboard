@@ -92,7 +92,7 @@ function buildA1(){
   const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
   box.append(fCat.el,fRisk.el);
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk:fRisk.getSet()});
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet()});
     const byMgr={}; d.forEach(r=>{ if(r.aum_huf!=null) byMgr[r.manager]=(byMgr[r.manager]||0)+r.aum_huf; });
     const mgrs=Object.entries(byMgr).sort((a,b)=>b[1]-a[1]).slice(0,15).map(x=>x[0]);
     const cats=[...new Set(d.filter(r=>mgrs.includes(r.manager)&&r.aum_huf!=null).map(r=>r.category))].sort();
@@ -147,7 +147,7 @@ function buildA2(){
   let sort={key:"r_1y",dir:-1}; rs.value=sort.key;
   rs.onchange=()=>{const o=A2_RANK.find(o=>o.key===rs.value);sort={key:o.key,dir:o.dir};render();};
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk:fRisk.getSet(),currency:fCcy.getSet(),manager:fMgr.getSet()});
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet(),manager:fMgr.getSet()});
     const rows=[...d].sort((a,b)=>cmp(a[sort.key],b[sort.key],sort.dir)).slice(0,20);
     paintGrid("a2",A2_COLS,rows,sort,(k)=>{
       const textCol=["name","series","manager","category","currency","risk_return"].includes(k);
@@ -180,7 +180,7 @@ function buildA3(){
   const sel=el("a3-rank"); sel.innerHTML=A3_M.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
   let metric=A3_M[0]; sel.value=metric.key; sel.onchange=()=>{metric=A3_M.find(o=>o.key===sel.value);render();};
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk:fRisk.getSet(),currency:fCcy.getSet()});
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()});
     const rows=aggMgr(d).filter(x=>x[metric.key]!=null).sort((a,b)=>b[metric.key]-a[metric.key]).slice(0,15);
     hbar("a3-canvas",rows.map(r=>r.manager),rows.map(r=>metric.toBar(r[metric.key])),
       rows.map((_,i)=>colorFor(i)),(v,ctx)=>metric.fmt(rows[ctx.dataIndex][metric.key]),metric.axis);
@@ -197,7 +197,7 @@ function buildA4(){
   const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
   box.append(fCat.el,fRisk.el,fCcy.el);
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk:fRisk.getSet(),currency:fCcy.getSet()}).filter(r=>r.vol_1y!=null&&r.r_1y!=null);
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()}).filter(r=>r.vol_1y!=null&&r.r_1y!=null);
     const aums=d.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
     const rad=a=> d.length<=1?14:6+22*Math.sqrt(((a||0)-mn)/((mx-mn)||1));
     const mgrs=[...new Set(d.map(r=>r.manager))];
@@ -220,7 +220,7 @@ function buildA5(){
   const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
   box.append(fRisk.el,fCcy.el);
   function render(){
-    const d=filterData(RAW,{risk:fRisk.getSet(),currency:fCcy.getSet()});
+    const d=filterData(RAW,{risk_return:fRisk.getSet(),currency:fCcy.getSet()});
     const by={}; d.forEach(r=>{ if(r.aum_huf!=null) by[r.category]=(by[r.category]||0)+r.aum_huf; });
     const ent=Object.entries(by).sort((a,b)=>b[1]-a[1]);
     if(charts.a5)charts.a5.destroy();
@@ -243,7 +243,7 @@ function buildA6(){
   const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
   box.append(fCat.el,fRisk.el,fCcy.el);
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk:fRisk.getSet(),currency:fCcy.getSet()}).filter(r=>r.turnover_cum_30d_huf!=null&&r.turnover_cum_30d_huf!==0);
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()}).filter(r=>r.turnover_cum_30d_huf!=null&&r.turnover_cum_30d_huf!==0);
     const sorted=[...d].sort((a,b)=>b.turnover_cum_30d_huf-a.turnover_cum_30d_huf);
     const top=sorted.slice(0,10), bottom=sorted.slice(-10).filter(r=>r.turnover_cum_30d_huf<0);
     const rows=[...top,...bottom.reverse()];
