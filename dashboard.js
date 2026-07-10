@@ -267,12 +267,12 @@ function buildA7(){
   async function ensure(){
     if(A7DATA) return;
     const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
-    A7DATA=await sbGetAll(`v_market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`);
+    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`);
   }
   async function render(){
     const note=el("a7-note");
     try{ await ensure(); }
-    catch(e){ note.hidden=false; note.textContent='A Piac alakulása nézethez létre kell hozni a v_market_aum_daily nézetet (lásd az SQL lépést).'; if(charts.a7){charts.a7.destroy();charts.a7=null;} return; }
+    catch(e){ note.hidden=false; note.textContent='A Piac alakulása nézethez létre kell hozni a market_aum_daily táblát (lásd az SQL lépést).'; if(charts.a7){charts.a7.destroy();charts.a7=null;} return; }
     note.hidden=true;
     const months=parseInt(rs.value,10);
     const cut=new Date(); cut.setMonth(cut.getMonth()-months); const cutS=cut.toISOString().slice(0,10);
