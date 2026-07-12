@@ -268,7 +268,7 @@ function buildA7(){
   async function ensure(){
     if(A7DATA) return;
     const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
-    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`);
+    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf,turnover_huf&order=obs_date.asc`);
   }
   async function render(){
     const note=el("a7-note");
@@ -323,7 +323,7 @@ function buildA9(){
   rs.value="12"; rs.onchange=render;
   async function ensure(){ if(A7DATA) return;
     const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
-    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`); }
+    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf,turnover_huf&order=obs_date.asc`); }
   async function render(){
     const note=el("a9-note");
     try{ await ensure(); }catch(e){ note.hidden=false; note.textContent="Ehhez a nézethez létre kell hozni a market_aum_daily táblát (lásd az SQL lépést)."; if(charts.a9){charts.a9.destroy();charts.a9=null;} return; }
@@ -332,19 +332,92 @@ function buildA9(){
     const cut=new Date(); cut.setMonth(cut.getMonth()-months); const cutS=cut.toISOString().slice(0,10);
     const sel=fCat.getSet();
     const rows=A7DATA.filter(r=> r.obs_date>=cutS && (sel.size===0||sel.has(String(r.category))));
-    const monthCat={};
-    rows.forEach(r=>{ const mo=r.obs_date.slice(0,7); (monthCat[mo] ||= {});
-      const cur=monthCat[mo][r.category]; if(!cur||r.obs_date>cur.date) monthCat[mo][r.category]={date:r.obs_date,aum:Number(r.aum_huf||0)}; });
-    const monthsK=Object.keys(monthCat).sort();
+    const dateCat={};
+    rows.forEach(r=>{ (dateCat[r.obs_date] ||= {}); dateCat[r.obs_date][r.category]=(dateCat[r.obs_date][r.category]||0)+Number(r.aum_huf||0); });
+    let dates=Object.keys(dateCat).sort();
+    dates=dates.slice(0, Math.max(0, dates.length-5)); // utolsó 5 nap levágva (hiányos adat)
     const cats=[...new Set(rows.map(r=>r.category))].sort();
-    const datasets=cats.map((cat,ci)=>({label:cat,backgroundColor:colorFor(ci),stack:"s",
-      data:monthsK.map(mo=> (monthCat[mo][cat]?monthCat[mo][cat].aum:0)/1e9)}));
+    const datasets=cats.map((cat,ci)=>({label:cat,borderColor:colorFor(ci),backgroundColor:colorFor(ci)+"99",
+      data:dates.map(dt=> (dateCat[dt][cat]||0)/1e9), fill:true, pointRadius:0, borderWidth:1, tension:.2, stack:"s"}));
     if(charts.a9)charts.a9.destroy();
-    charts.a9=new Chart(el("a9-canvas"),{type:"bar",data:{labels:monthsK,datasets},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{x:{stacked:true,ticks:{maxTicksLimit:12,autoSkip:true}},y:{stacked:true,title:{display:true,text:"AUM (Mrd Ft)"}}},
+    charts.a9=new Chart(el("a9-canvas"),{type:"line",data:{labels:dates,datasets},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+        scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{stacked:true,title:{display:true,text:"AUM (Mrd Ft)"}}},
         plugins:{legend:{position:"bottom"},datalabels:{display:false},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})} Mrd Ft`}}}}});
+          tooltip:{mode:"index",intersect:false,callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})} Mrd Ft`}}}}});
+  }
+  ELEMENTS_A.push(render);
+}
+
+// 10) Hozam vs. költség — buborék (x=TER, y=1é hozam, méret=AUM, szín=kategória)
+function buildAcost(){
+  const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
+  const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
+  const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
+  el("a10-filters").append(fCat.el,fRisk.el,fCcy.el);
+  function render(){
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()})
+      .filter(r=>r.ter!=null&&r.r_1y!=null);
+    const aums=d.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
+    const rad=a=> d.length<=1?14:6+22*Math.sqrt(((a||0)-mn)/((mx-mn)||1));
+    const cats=[...new Set(d.map(r=>r.category))];
+    const datasets=cats.map((cat,i)=>({label:cat,backgroundColor:colorFor(i)+"cc",borderColor:colorFor(i),
+      data:d.filter(r=>r.category===cat).map(r=>({x:r.ter*100,y:r.r_1y*100,r:rad(r.aum_huf),name:r.name,series:r.series,aum:r.aum_huf}))}));
+    if(charts.a10)charts.a10.destroy();
+    charts.a10=new Chart(el("a10-canvas"),{type:"bubble",data:{datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{title:{display:true,text:"TER (%)"}},y:{title:{display:true,text:"1 éves hozam (%)"}}},
+        plugins:{legend:{position:"bottom"},datalabels:{display:false},
+          tooltip:{callbacks:{label:c=>{const p=c.raw;return `${p.name}${p.series?" ("+p.series+")":""}: TER ${p.x.toFixed(2)}%, hozam ${p.y.toFixed(1)}%, AUM ${fmt.mrd(p.aum)} Mrd`;}}}}}});
+  }
+  ELEMENTS_A.push(render);
+}
+
+// 11) Kategória-összevetés — táblázat + választható mutató bar
+const A11_COLS=[
+ {key:"category",label:"Kategória",type:"text",w:200},
+ {key:"aum",label:"AUM (Mrd Ft)",type:"mrd",num:true,w:110},
+ {key:"r_1y",label:"1é hozam*",type:"pct",num:true,color:true,w:88},
+ {key:"vol_1y",label:"Volatilitás*",type:"pct",num:true,w:100},
+ {key:"sharpe_1y",label:"Sharpe*",type:"num2",num:true,w:82},
+ {key:"ter",label:"TER*",type:"pct2",num:true,w:74},
+ {key:"turn3m",label:"3 havi forgalom (Mrd Ft)",type:"mrd",num:true,w:160},
+];
+const A11_M=[
+ {key:"r_1y",label:"1 éves hozam (AUM-súly.)",toBar:v=>v*100,barFmt:v=>v.toFixed(1)+"%",axis:"1 éves hozam (%)"},
+ {key:"vol_1y",label:"Volatilitás (AUM-súly.)",toBar:v=>v*100,barFmt:v=>v.toFixed(1)+"%",axis:"Volatilitás (%)"},
+ {key:"sharpe_1y",label:"Sharpe (AUM-súly.)",toBar:v=>v,barFmt:v=>v.toFixed(2),axis:"Sharpe"},
+ {key:"ter",label:"TER (AUM-súly.)",toBar:v=>v*100,barFmt:v=>v.toFixed(2)+"%",axis:"TER (%)"},
+ {key:"turn3m",label:"3 havi forgalom (Mrd Ft)",toBar:v=>v/1e9,barFmt:v=>v.toLocaleString("hu-HU",{maximumFractionDigits:1}),axis:"Forgalom (Mrd Ft)"},
+];
+function buildAcat(){
+  const selM=el("a11-metric"); selM.innerHTML=A11_M.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
+  let metric=A11_M[0]; selM.value=metric.key; selM.onchange=()=>{metric=A11_M.find(o=>o.key===selM.value);render();};
+  let sort={key:"aum",dir:-1};
+  async function ensureM(){ if(A7DATA) return;
+    const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
+    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf,turnover_huf&order=obs_date.asc`); }
+  async function render(){
+    const base=RAW.filter(r=> window.SHOW_ILLIQUID || !r.is_illiquid);
+    const agg={};
+    base.forEach(r=>{ const c=r.category; if(!c)return;
+      (agg[c] ||= {aum:0,wn:{r_1y:0,vol_1y:0,sharpe_1y:0,ter:0},wd:{r_1y:0,vol_1y:0,sharpe_1y:0,ter:0}});
+      const g=agg[c]; if(r.aum_huf!=null) g.aum+=r.aum_huf;
+      ["r_1y","vol_1y","sharpe_1y","ter"].forEach(k=>{ if(r[k]!=null&&r.aum_huf!=null){ g.wn[k]+=r.aum_huf*r[k]; g.wd[k]+=r.aum_huf; } });
+    });
+    let turn={};
+    try{ await ensureM(); const cut=new Date(); cut.setMonth(cut.getMonth()-3); const cutS=cut.toISOString().slice(0,10);
+      A7DATA.forEach(r=>{ if(r.obs_date>=cutS) turn[r.category]=(turn[r.category]||0)+Number(r.turnover_huf||0); });
+    }catch(e){}
+    const rows=Object.entries(agg).map(([category,g])=>({category,aum:g.aum,
+      r_1y:g.wd.r_1y>0?g.wn.r_1y/g.wd.r_1y:null, vol_1y:g.wd.vol_1y>0?g.wn.vol_1y/g.wd.vol_1y:null,
+      sharpe_1y:g.wd.sharpe_1y>0?g.wn.sharpe_1y/g.wd.sharpe_1y:null, ter:g.wd.ter>0?g.wn.ter/g.wd.ter:null,
+      turn3m: (category in turn)?turn[category]:null }));
+    const srt=[...rows].sort((a,b)=>cmp(a[sort.key],b[sort.key],sort.dir));
+    paintGrid("a11",A11_COLS,srt,sort,(k)=>{ if(k===sort.key)sort.dir=-sort.dir; else sort={key:k,dir:(k==="category"?1:-1)}; render(); });
+    const brows=[...rows].filter(r=>r[metric.key]!=null).sort((a,b)=>b[metric.key]-a[metric.key]);
+    hbar("a11-canvas",brows.map(r=>r.category),brows.map(r=>metric.toBar(r[metric.key])),
+      brows.map((_,i)=>colorFor(i)),(v)=>metric.barFmt(v),metric.axis);
   }
   ELEMENTS_A.push(render);
 }
@@ -423,7 +496,8 @@ function buildB(){
           tooltip:{callbacks:{label:c=>{const p=c.raw;return `${p.name}: vol ${p.x.toFixed(1)}%, hozam ${p.y.toFixed(1)}%, AUM ${fmt.mrd(p.aum)} Mrd`;}}}}}});
     // forgalmazás (async)
     renderB12(peers,cmap);
-    setupB14(peers,cmap2);
+    setupB14(peers,cmap);
+    setupB15(peers,cmap);
   }
   ELEMENTS_B.push(render);
 }
@@ -494,6 +568,45 @@ async function setupB14(peers,cmap2){
   }
 }
 
+let B15STATE=null;
+// 15) Normált árfolyam-index (bázis = 100) — peer group, 3h/6h/1é/3é
+async function setupB15(peers,cmap){
+  const rs=el("b15-range"); rs.innerHTML=A7_RANGES.map(o=>`<option value="${o.m}">${o.label}</option>`).join("");
+  rs.value="12";
+  if(charts.b15){charts.b15.destroy();charts.b15=null;}
+  el("b15-note").hidden=true;
+  const isins=peers.map(p=>p.isin);
+  const d=new Date(); d.setFullYear(d.getFullYear()-3); d.setMonth(d.getMonth()-1); const from=d.toISOString().slice(0,10);
+  const inlist="("+isins.map(x=>`"${x}"`).join(",")+")";
+  let rows=[];
+  try{ rows=await sbGetAll(`v_fund_full?isin=in.${inlist}&obs_date=gte.${from}&select=isin,obs_date,price&order=obs_date.asc`); }
+  catch(e){ el("b15-note").hidden=false; el("b15-note").textContent="Az árfolyam-adatok nem elérhetők."; return; }
+  const per={}; peers.forEach(p=>per[p.isin]={d:[],p:[]});
+  rows.forEach(r=>{ if(per[r.isin]){ per[r.isin].d.push(r.obs_date); per[r.isin].p.push(r.price!=null?Number(r.price):null); } });
+  B15STATE={peers,cmap,per};
+  rs.onchange=draw; draw();
+  function draw(){
+    if(!B15STATE) return;
+    const months=parseInt(rs.value,10);
+    const cut=new Date(); cut.setMonth(cut.getMonth()-months); const cutS=cut.toISOString().slice(0,10);
+    const allDates=[...new Set([].concat(...B15STATE.peers.map(p=>B15STATE.per[p.isin].d.filter(x=>x>=cutS))))].sort();
+    const datasets=B15STATE.peers.map(p=>{
+      const dd=B15STATE.per[p.isin].d, pp=B15STATE.per[p.isin].p;
+      let base=null; for(let i=0;i<dd.length;i++){ if(dd[i]>=cutS && pp[i]!=null){ base=pp[i]; break; } }
+      const map={}; if(base) for(let i=0;i<dd.length;i++){ if(dd[i]>=cutS && pp[i]!=null) map[dd[i]]=pp[i]/base*100; }
+      return {label:p.name,borderColor:B15STATE.cmap[p.isin],backgroundColor:B15STATE.cmap[p.isin],
+        data:allDates.map(dt=> dt in map? map[dt]:null),spanGaps:true,pointRadius:0,borderWidth:2,tension:.2};
+    });
+    if(charts.b15)charts.b15.destroy();
+    if(!datasets.length) return;
+    charts.b15=new Chart(el("b15-canvas"),{type:"line",data:{labels:allDates,datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{title:{display:true,text:"Index (bázis = 100)"}}},
+        plugins:{legend:{position:"bottom"},datalabels:{display:false},
+          tooltip:{callbacks:{label:c=> c.parsed.y!=null? `${c.dataset.label}: ${c.parsed.y.toFixed(1)}`:""}}}}});
+  }
+}
+
 // ===================== összehangolás =====================
 function renderActive(){ renderSummary(); (VIEW==="a"?ELEMENTS_A:ELEMENTS_B).forEach(fn=>fn()); }
 function switchView(v){
@@ -506,7 +619,7 @@ async function init(){
   try{
     RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();
+    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();buildAcost();buildAcat();
     buildB();
     document.querySelectorAll(".viewswitch button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
     const g=el("illiq-global"); g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderActive(); });

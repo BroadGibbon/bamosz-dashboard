@@ -94,10 +94,27 @@
         <div class="blockhead"><h2>Piac alakulása kategóriánként</h2>
           <label class="rank">Időszak: <select id="a9-range"></select></label>
         </div>
-        <p class="blocknote">A piaci AUM alakulása kategóriánként (halmozott oszlop, havi pillanatképek). A kategória-szűrő és a jelmagyarázat is szűr.</p>
+        <p class="blocknote">A piaci AUM alakulása kategóriánként (halmozott terület, napi adat, az utolsó 5 nap levágva). A kategória-szűrő és a jelmagyarázat is szűr.</p>
         <div class="filters" id="a9-filters"></div>
         <p class="blocknote" id="a9-note" hidden></p>
         <div class="chartbox tall"><canvas id="a9-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Hozam vs. költség</h2></div>
+        <p class="blocknote">X = TER, Y = 1 éves hozam, buborék mérete = AUM, szín = kategória. Megmutatja, „megfizetteti-e magát” a magasabb díj.</p>
+        <div class="filters" id="a10-filters"></div>
+        <div class="chartbox tall"><canvas id="a10-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Kategória-összevetés</h2>
+          <label class="rank">Diagram: <select id="a11-metric"></select></label>
+        </div>
+        <p class="blocknote">Kategóriánként AUM-súlyozott átlagos hozam / volatilitás / Sharpe / TER (*), és az elmúlt 3 hónap összes (nettó) forgalma. A diagram a kiválasztott mutatót jeleníti meg.</p>
+        <div class="tablewrap"><table id="a11" class="grid"><colgroup id="a11-cg"></colgroup>
+          <thead id="a11-h"></thead><tbody id="a11-b"></tbody></table></div>
+        <div class="chartbox tall"><canvas id="a11-canvas"></canvas></div>
       </section>
 
     </div>
@@ -151,6 +168,15 @@
         <div class="filters" id="b14-filters"></div>
         <p class="blocknote" id="b14-note" hidden></p>
         <div class="chartbox tall"><canvas id="b14-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
+        <div class="blockhead"><h2>Normált árfolyam-index (bázis = 100)</h2>
+          <label class="rank">Időszak: <select id="b15-range"></select></label>
+        </div>
+        <p class="blocknote">A peer group alapjainak kumulált teljesítménye közös 100-as bázisról. A színek megegyeznek a többi peer-diagraméval.</p>
+        <p class="blocknote" id="b15-note" hidden></p>
+        <div class="chartbox tall"><canvas id="b15-canvas"></canvas></div>
       </section>
 
     </div>

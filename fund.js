@@ -74,9 +74,10 @@ async function buildPeers(f){
   const note=el("f-peernote");
   let peers=[];
   try{
-    const q=`fund_latest?category=eq.${encodeURIComponent(f.category)}&currency=eq.${encodeURIComponent(f.currency)}&risk_return=eq.${encodeURIComponent(f.risk_return)}&select=isin,name,series,vol_1y,r_1y,aum_huf`;
+    const q=`fund_latest?category=eq.${encodeURIComponent(f.category)}&currency=eq.${encodeURIComponent(f.currency)}&risk_return=eq.${encodeURIComponent(f.risk_return)}&select=isin,name,series,vol_1y,r_1y,sharpe_1y,ter,aum_huf`;
     peers=await sbGetAll(q);
   }catch(e){ note.hidden=false; note.textContent="A társalapok lekérése nem sikerült."; return; }
+  buildGauges(f, peers);
   peers=peers.filter(r=>r.vol_1y!=null&&r.r_1y!=null);
   if(!peers.length){ note.hidden=false; note.textContent="Nincs elég adat a társalapokhoz."; return; }
   const aums=peers.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
@@ -93,6 +94,39 @@ async function buildPeers(f){
       scales:{x:{title:{display:true,text:"Volatilitás (%)"}},y:{title:{display:true,text:"1 éves hozam (%)"}}},
       plugins:{legend:{position:"bottom"},datalabels:{display:false},
         tooltip:{callbacks:{label:c=>{const p=c.raw;return `${p.name}${p.series?" ("+p.series+")":""}: vol ${p.x.toFixed(1)}%, hozam ${p.y.toFixed(1)}%, AUM ${fmt.mrd(p.aum)} Mrd`;}}}}}});
+}
+
+
+function buildGauges(f, group){
+  const box=el("f-gauges"); if(!box) return;
+  const metrics=[
+    {key:"r_1y",label:"1 éves hozam",fmt:v=>fmt.pct(v,1),better:"high"},
+    {key:"sharpe_1y",label:"Sharpe",fmt:v=>fmt.num(v,2),better:"high"},
+    {key:"ter",label:"TER",fmt:v=>fmt.pct(v,2),better:"low"},
+  ];
+  box.innerHTML=metrics.map(m=>{
+    const vals=group.map(p=>p[m.key]).filter(v=>v!=null);
+    if(vals.length<1 || f[m.key]==null)
+      return `<div class="gauge-row"><div class="gauge-lab">${m.label}</div><div class="gauge-na">nincs elég adat</div></div>`;
+    const min=Math.min(...vals), max=Math.max(...vals), span=(max-min)||1;
+    let wn=0,wd=0; group.forEach(p=>{ if(p[m.key]!=null&&p.aum_huf!=null){ wn+=p[m.key]*p.aum_huf; wd+=p.aum_huf; } });
+    const avg=wd>0?wn/wd:null;
+    const pos=v=>Math.max(0,Math.min(100,(v-min)/span*100));
+    const grad=m.better==="high"
+      ? "linear-gradient(90deg,#c62828 0%,#e0a800 50%,#2E8B6B 100%)"
+      : "linear-gradient(90deg,#2E8B6B 0%,#e0a800 50%,#c62828 100%)";
+    const fp=pos(f[m.key]); const ap=avg!=null?pos(avg):null;
+    return `<div class="gauge-row">
+      <div class="gauge-lab">${m.label}</div>
+      <div class="gauge-track">
+        <div class="gauge-bar" style="background:${grad}"></div>
+        ${ap!=null?`<div class="gauge-avg" style="left:${ap}%"></div>`:""}
+        <div class="gauge-fund" style="left:${fp}%"></div>
+      </div>
+      <div class="gauge-ends"><span>min: ${m.fmt(min)}</span><span>max: ${m.fmt(max)}</span></div>
+      <div class="gauge-vals"><span class="g-fund">● Alap: <b>${m.fmt(f[m.key])}</b></span>${avg!=null?`<span class="g-avg">▏ Csoport átlag: <b>${m.fmt(avg)}</b></span>`:""}</div>
+    </div>`;
+  }).join("");
 }
 
 main();
