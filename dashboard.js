@@ -67,8 +67,9 @@ function hbar(canvasKey,labels,data,colors,valueFmt,axisTitle){
       datalabels:{display:true,anchor:"end",align:"right",clamp:true,color:"#0D1B1E",font:{weight:"bold",size:11},
         formatter:(v,ctx)=> v==null?"":valueFmt(v,ctx)}}]},
     options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,layout:{padding:{right:74}},
-      scales:{x:{title:{display:!!axisTitle,text:axisTitle}}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=> valueFmt(c.raw,c)}}}}});
+      scales:{x:{title:{display:!!axisTitle,text:axisTitle}},
+        y:{ticks:{autoSkip:false,crossAlign:"far",callback:function(val){const l=this.getLabelForValue(val);return (typeof l==="string"&&l.length>24)?l.slice(0,23)+"\u2026":l;}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>items[0]?items[0].label:"",label:c=> valueFmt(c.raw,c)}}}}});
 }
 
 // ===== szűrés =====
@@ -287,9 +288,63 @@ function buildA7(){
       data:{labels:dates,datasets:[{label:"Össz piaci AUM (Mrd Ft)",data:vals,
         borderColor:"#00474F",backgroundColor:"rgba(0,71,79,.12)",fill:true,pointRadius:0,borderWidth:2,tension:.2}]},
       options:{responsive:true,maintainAspectRatio:false,
+        interaction:{mode:"index",intersect:false},
         scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{title:{display:true,text:"AUM (Mrd Ft)"}}},
         plugins:{legend:{display:false},datalabels:{display:false},
-          tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})+" Mrd Ft"}}}}});
+          tooltip:{mode:"index",intersect:false,yAlign:"bottom",displayColors:false,
+            callbacks:{title:items=>items[0]?items[0].label:"",label:c=>c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})+" Mrd Ft"}}}}});
+  }
+  ELEMENTS_A.push(render);
+}
+
+// 8) Alapkezelők nettó forgalom – 30 nap
+function buildA8(){
+  const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
+  const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
+  const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
+  el("a8-filters").append(fCat.el,fRisk.el,fCcy.el);
+  function render(){
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()});
+    const by={}; d.forEach(r=>{ if(r.turnover_cum_30d_huf!=null) by[r.manager]=(by[r.manager]||0)+r.turnover_cum_30d_huf; });
+    const arr=Object.entries(by).map(([m,v])=>({manager:m,val:v})).filter(x=>x.val!==0).sort((a,b)=>b.val-a.val);
+    const rows=[...arr.slice(0,10),...arr.slice(-10).filter(x=>x.val<0).reverse()];
+    hbar("a8-canvas",rows.map(r=>r.manager),rows.map(r=>r.val/1e9),
+      rows.map(r=>r.val>=0?"#2E8B6B":"#c62828"),
+      (v)=>(v>=0?"+":"")+v.toLocaleString("hu-HU",{maximumFractionDigits:2}),"Nettó forgalom (Mrd Ft)");
+  }
+  ELEMENTS_A.push(render);
+}
+
+// 9) Piac alakulása kategóriánként — halmozott oszlop (havi pillanatképek)
+function buildA9(){
+  const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
+  el("a9-filters").append(fCat.el);
+  const rs=el("a9-range"); rs.innerHTML=A7_RANGES.map(o=>`<option value="${o.m}">${o.label}</option>`).join("");
+  rs.value="12"; rs.onchange=render;
+  async function ensure(){ if(A7DATA) return;
+    const d=new Date(); d.setFullYear(d.getFullYear()-3); const from=d.toISOString().slice(0,10);
+    A7DATA=await sbGetAll(`market_aum_daily?obs_date=gte.${from}&select=obs_date,category,aum_huf&order=obs_date.asc`); }
+  async function render(){
+    const note=el("a9-note");
+    try{ await ensure(); }catch(e){ note.hidden=false; note.textContent="Ehhez a nézethez létre kell hozni a market_aum_daily táblát (lásd az SQL lépést)."; if(charts.a9){charts.a9.destroy();charts.a9=null;} return; }
+    note.hidden=true;
+    const months=parseInt(rs.value,10);
+    const cut=new Date(); cut.setMonth(cut.getMonth()-months); const cutS=cut.toISOString().slice(0,10);
+    const sel=fCat.getSet();
+    const rows=A7DATA.filter(r=> r.obs_date>=cutS && (sel.size===0||sel.has(String(r.category))));
+    const monthCat={};
+    rows.forEach(r=>{ const mo=r.obs_date.slice(0,7); (monthCat[mo] ||= {});
+      const cur=monthCat[mo][r.category]; if(!cur||r.obs_date>cur.date) monthCat[mo][r.category]={date:r.obs_date,aum:Number(r.aum_huf||0)}; });
+    const monthsK=Object.keys(monthCat).sort();
+    const cats=[...new Set(rows.map(r=>r.category))].sort();
+    const datasets=cats.map((cat,ci)=>({label:cat,backgroundColor:colorFor(ci),stack:"s",
+      data:monthsK.map(mo=> (monthCat[mo][cat]?monthCat[mo][cat].aum:0)/1e9)}));
+    if(charts.a9)charts.a9.destroy();
+    charts.a9=new Chart(el("a9-canvas"),{type:"bar",data:{labels:monthsK,datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{stacked:true,ticks:{maxTicksLimit:12,autoSkip:true}},y:{stacked:true,title:{display:true,text:"AUM (Mrd Ft)"}}},
+        plugins:{legend:{position:"bottom"},datalabels:{display:false},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString("hu-HU",{maximumFractionDigits:0})} Mrd Ft`}}}}});
   }
   ELEMENTS_A.push(render);
 }
@@ -334,7 +389,7 @@ function buildB(){
       `<span><b>Kockázat:</b> ${riskCircle(sel.risk_return)}</span>`+`<span><b>Deviza:</b> ${fmt.txt(sel.currency)}</span>`;
     const peers=peerGroup(sel);
     const ordered=[...peers].sort((a,b)=>String(a.name).localeCompare(String(b.name),"hu"));
-    const cmap={}; ordered.forEach((r,i)=>cmap[r.isin]=colorFor(i));
+    const cmap={},cmap2={}; ordered.forEach((r,i)=>{cmap[r.isin]=colorFor(i);cmap2[r.isin]=colorFor(i+5);});
     // helyezések
     const byR=[...peers].filter(r=>r.r_1y!=null).sort((a,b)=>b.r_1y-a.r_1y); byR.forEach((r,i)=>r.rank_r1y=i+1);
     const byS=[...peers].filter(r=>r.sharpe_1y!=null).sort((a,b)=>b.sharpe_1y-a.sharpe_1y); byS.forEach((r,i)=>r.rank_sharpe=i+1);
@@ -343,11 +398,17 @@ function buildB(){
     trows.forEach(r=>{ r.__sel=(r.isin===sel.isin); r.__sw=cmap[r.isin]; });
     paintGrid("b7",B7_COLS,trows,{key:sortKey,dir:-1},null);
     // bar chartok (érték jobbra, szín alaponként)
-    const lab=peers.map(r=>r.name), col=peers.map(r=>cmap[r.isin]);
-    hbar("b8-canvas",lab,peers.map(r=>r.r_1y!=null?r.r_1y*100:null),col,(v)=>v.toFixed(1)+"%","1 éves hozam (%)");
-    hbar("b9-canvas",lab,peers.map(r=>r.sharpe_1y),col,(v)=>v.toFixed(2),"Sharpe");
-    hbar("b10-canvas",lab,peers.map(r=>r.sortino_1y),col,(v)=>v.toFixed(2),"Sortino");
-    hbar("b11-canvas",lab,peers.map(r=>r.ter!=null?r.ter*100:null),col,(v)=>v.toFixed(2)+"%","TER (%)");
+    // bar chartok: mutatónként csökkenő sorrend (legmagasabb fent), csak a kiválasztott GAK alap kiemelve
+    const HLC="#00474F", BASEC="#B7D3C8";
+    const mbar=(canvas,key,mult,fmtFn,axis)=>{
+      const rows=[...peers].filter(r=>r[key]!=null).sort((a,b)=>b[key]-a[key]);
+      hbar(canvas,rows.map(r=>r.name),rows.map(r=>mult?r[key]*100:r[key]),
+        rows.map(r=>r.isin===sel.isin?HLC:BASEC),fmtFn,axis);
+    };
+    mbar("b8-canvas","r_1y",true,(v)=>v.toFixed(1)+"%","1 éves hozam (%)");
+    mbar("b9-canvas","sharpe_1y",false,(v)=>v.toFixed(2),"Sharpe");
+    mbar("b10-canvas","sortino_1y",false,(v)=>v.toFixed(2),"Sortino");
+    mbar("b11-canvas","ter",true,(v)=>v.toFixed(2)+"%","TER (%)");
     // bubble
     const aums=peers.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
     const rad=a=> peers.length<=1?16:8+22*Math.sqrt(((a||0)-mn)/((mx-mn)||1));
@@ -362,6 +423,7 @@ function buildB(){
           tooltip:{callbacks:{label:c=>{const p=c.raw;return `${p.name}: vol ${p.x.toFixed(1)}%, hozam ${p.y.toFixed(1)}%, AUM ${fmt.mrd(p.aum)} Mrd`;}}}}}});
     // forgalmazás (async)
     renderB12(peers,cmap);
+    setupB14(peers,cmap2);
   }
   ELEMENTS_B.push(render);
 }
@@ -386,6 +448,52 @@ async function renderB12(peers,cmap){
       plugins:{legend:{position:"bottom"},datalabels:{display:false}}}});
 }
 
+// 14) 1 éves hozam alakulása — gördülő 1 éves hozam idősor
+function rolling1y(dates,prices){
+  const out=[]; const c=new Date(); c.setFullYear(c.getFullYear()-1); const cutS=c.toISOString().slice(0,10);
+  for(let i=0;i<dates.length;i++){ const D=dates[i]; if(D<cutS) continue; if(prices[i]==null) continue;
+    const t=new Date(D); t.setFullYear(t.getFullYear()-1); const target=t.toISOString().slice(0,10);
+    let lo=0,hi=i,idx=-1; while(lo<=hi){const m=(lo+hi)>>1; if(dates[m]<=target){idx=m;lo=m+1;}else hi=m-1;}
+    if(idx>=0 && prices[idx]>0) out.push({d:D,ret:(prices[i]/prices[idx]-1)*100}); }
+  return out;
+}
+let B14STATE=null;
+async function setupB14(peers,cmap2){
+  const box=el("b14-filters"); box.innerHTML="";
+  const labels=peers.map(p=>p.name+(p.series?" – "+p.series:""));
+  const fFund=MultiSelect("Alapok",labels,{onChange:draw});
+  box.append(fFund.el);
+  if(charts.b14){charts.b14.destroy();charts.b14=null;}
+  el("b14-note").hidden=true;
+  const isins=peers.map(p=>p.isin);
+  const d=new Date(); d.setFullYear(d.getFullYear()-2); d.setMonth(d.getMonth()-1); const from=d.toISOString().slice(0,10);
+  const inlist="("+isins.map(x=>`"${x}"`).join(",")+")";
+  let rows=[];
+  try{ rows=await sbGetAll(`v_fund_full?isin=in.${inlist}&obs_date=gte.${from}&select=isin,obs_date,price&order=obs_date.asc`); }
+  catch(e){ el("b14-note").hidden=false; el("b14-note").textContent="A hozamgörbe adatai nem elérhetők."; return; }
+  const per={}; peers.forEach(p=>per[p.isin]={d:[],p:[]});
+  rows.forEach(r=>{ if(per[r.isin]){ per[r.isin].d.push(r.obs_date); per[r.isin].p.push(r.price!=null?Number(r.price):null); } });
+  const computed={}; peers.forEach(p=>{ computed[p.isin]=rolling1y(per[p.isin].d,per[p.isin].p); });
+  B14STATE={peers,cmap2,computed,fFund};
+  draw();
+  function draw(){
+    if(!B14STATE) return;
+    const selSet=B14STATE.fFund.getSet();
+    const chosen=B14STATE.peers.filter(p=> selSet.size===0 || selSet.has(p.name+(p.series?" – "+p.series:"")));
+    const allDates=[...new Set([].concat(...chosen.map(p=>B14STATE.computed[p.isin].map(x=>x.d))))].sort();
+    const datasets=chosen.map(p=>{ const map={}; B14STATE.computed[p.isin].forEach(x=>map[x.d]=x.ret);
+      return {label:p.name,borderColor:B14STATE.cmap2[p.isin],backgroundColor:B14STATE.cmap2[p.isin],
+        data:allDates.map(dt=> dt in map? map[dt]:null),spanGaps:true,pointRadius:0,borderWidth:2,tension:.2}; });
+    if(charts.b14)charts.b14.destroy();
+    if(!datasets.length) return;
+    charts.b14=new Chart(el("b14-canvas"),{type:"line",data:{labels:allDates,datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{title:{display:true,text:"1 éves hozam (%)"}}},
+        plugins:{legend:{position:"bottom"},datalabels:{display:false},
+          tooltip:{callbacks:{label:c=> c.parsed.y!=null? `${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:""}}}}});
+  }
+}
+
 // ===================== összehangolás =====================
 function renderActive(){ renderSummary(); (VIEW==="a"?ELEMENTS_A:ELEMENTS_B).forEach(fn=>fn()); }
 function switchView(v){
@@ -398,7 +506,7 @@ async function init(){
   try{
     RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();
+    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();
     buildB();
     document.querySelectorAll(".viewswitch button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
     const g=el("illiq-global"); g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderActive(); });

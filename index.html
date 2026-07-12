@@ -75,6 +75,13 @@
       </section>
 
       <section class="block">
+        <div class="blockhead"><h2>Alapkezelők nettó forgalom – 30 nap (Mrd Ft)</h2></div>
+        <p class="blocknote">A legnagyobb nettó be- és kiáramlások alapkezelőnként az elmúlt 30 napban, forintra váltva.</p>
+        <div class="filters" id="a8-filters"></div>
+        <div class="chartbox tall"><canvas id="a8-canvas"></canvas></div>
+      </section>
+
+      <section class="block">
         <div class="blockhead"><h2>Piac alakulása</h2>
           <label class="rank">Időszak: <select id="a7-range"></select></label>
         </div>
@@ -83,6 +90,16 @@
         <p class="blocknote" id="a7-note" hidden></p>
         <div class="chartbox tall"><canvas id="a7-canvas"></canvas></div>
       </section>
+      <section class="block">
+        <div class="blockhead"><h2>Piac alakulása kategóriánként</h2>
+          <label class="rank">Időszak: <select id="a9-range"></select></label>
+        </div>
+        <p class="blocknote">A piaci AUM alakulása kategóriánként (halmozott oszlop, havi pillanatképek). A kategória-szűrő és a jelmagyarázat is szűr.</p>
+        <div class="filters" id="a9-filters"></div>
+        <p class="blocknote" id="a9-note" hidden></p>
+        <div class="chartbox tall"><canvas id="a9-canvas"></canvas></div>
+      </section>
+
     </div>
 
     <!-- ===================== B NÉZET ===================== -->
@@ -128,6 +145,14 @@
         <p class="blocknote">Buborék mérete = AUM, X = volatilitás, Y = 1 éves hozam, minden alap külön színnel.</p>
         <div class="chartbox tall"><canvas id="b13-canvas"></canvas></div>
       </section>
+      <section class="block">
+        <div class="blockhead"><h2>1 éves hozam alakulása</h2></div>
+        <p class="blocknote">Az egyes alapok gördülő 1 éves hozama az elmúlt 1 évben. Az „Alapok" szűrővel válogathatsz a peer group tagjai közül.</p>
+        <div class="filters" id="b14-filters"></div>
+        <p class="blocknote" id="b14-note" hidden></p>
+        <div class="chartbox tall"><canvas id="b14-canvas"></canvas></div>
+      </section>
+
     </div>
 
     <!-- Globális illikvid kapcsoló -->
