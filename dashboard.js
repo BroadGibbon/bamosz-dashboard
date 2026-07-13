@@ -350,30 +350,6 @@ function buildA9(){
   ELEMENTS_A.push(render);
 }
 
-// 10) Hozam vs. költség — buborék (x=TER, y=1é hozam, méret=AUM, szín=kategória)
-function buildAcost(){
-  const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
-  const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
-  const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
-  el("a10-filters").append(fCat.el,fRisk.el,fCcy.el);
-  function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()})
-      .filter(r=>r.ter!=null&&r.r_1y!=null);
-    const aums=d.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
-    const rad=a=> d.length<=1?14:6+22*Math.sqrt(((a||0)-mn)/((mx-mn)||1));
-    const cats=[...new Set(d.map(r=>r.category))];
-    const datasets=cats.map((cat,i)=>({label:cat,backgroundColor:colorFor(i)+"cc",borderColor:colorFor(i),
-      data:d.filter(r=>r.category===cat).map(r=>({x:r.ter*100,y:r.r_1y*100,r:rad(r.aum_huf),name:r.name,series:r.series,aum:r.aum_huf}))}));
-    if(charts.a10)charts.a10.destroy();
-    charts.a10=new Chart(el("a10-canvas"),{type:"bubble",data:{datasets},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{x:{title:{display:true,text:"TER (%)"}},y:{title:{display:true,text:"1 éves hozam (%)"}}},
-        plugins:{legend:{position:"bottom"},datalabels:{display:false},
-          tooltip:{callbacks:{label:c=>{const p=c.raw;return `${p.name}${p.series?" ("+p.series+")":""}: TER ${p.x.toFixed(2)}%, hozam ${p.y.toFixed(1)}%, AUM ${fmt.mrd(p.aum)} Mrd`;}}}}}});
-  }
-  ELEMENTS_A.push(render);
-}
-
 // 11) Kategória-összevetés — táblázat + választható mutató bar
 const A11_COLS=[
  {key:"category",label:"Kategória",type:"text",w:200},
@@ -622,8 +598,8 @@ async function init(){
   try{
     RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();buildAcat();
-    buildB();
+    [buildA1,buildA2,buildA3,buildA4,buildA5,buildA6,buildA7,buildA8,buildA9,buildAcat,buildB]
+      .forEach(fn=>{ try{ fn(); }catch(e){ console.warn("Csempe kihagyva:", e); } });
     document.querySelectorAll(".viewswitch button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
     const g=el("illiq-global"); g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderActive(); });
     switchView("a");
