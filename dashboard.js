@@ -243,9 +243,10 @@ function buildA6(){
   const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
   const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
   const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
-  box.append(fCat.el,fRisk.el,fCcy.el);
+  const fMgr=MultiSelect("Alapkezelő",MANAGERS,{onChange:render});
+  box.append(fCat.el,fRisk.el,fCcy.el,fMgr.el);
   function render(){
-    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()}).filter(r=>r.turnover_cum_30d_huf!=null&&r.turnover_cum_30d_huf!==0);
+    const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet(),manager:fMgr.getSet()}).filter(r=>r.turnover_cum_30d_huf!=null&&r.turnover_cum_30d_huf!==0);
     const sorted=[...d].sort((a,b)=>b.turnover_cum_30d_huf-a.turnover_cum_30d_huf);
     const top=sorted.slice(0,10), bottom=sorted.slice(-10).filter(r=>r.turnover_cum_30d_huf<0);
     const rows=[...top,...bottom.reverse()];
@@ -473,15 +474,17 @@ function buildB(){
     // bar chartok (érték jobbra, szín alaponként)
     // bar chartok: mutatónként csökkenő sorrend (legmagasabb fent), csak a kiválasztott GAK alap kiemelve
     const HLC="#00474F", BASEC="#B7D3C8";
-    const mbar=(canvas,key,mult,fmtFn,axis)=>{
+    const mbar=(canvas,key,toBar,fmtFn,axis)=>{
       const rows=[...peers].filter(r=>r[key]!=null).sort((a,b)=>b[key]-a[key]);
-      hbar(canvas,rows.map(r=>r.name),rows.map(r=>mult?r[key]*100:r[key]),
+      hbar(canvas,rows.map(r=>r.name),rows.map(r=>toBar(r[key])),
         rows.map(r=>r.isin===sel.isin?HLC:BASEC),fmtFn,axis);
     };
-    mbar("b8-canvas","r_1y",true,(v)=>v.toFixed(1)+"%","1 éves hozam (%)");
-    mbar("b9-canvas","sharpe_1y",false,(v)=>v.toFixed(2),"Sharpe");
-    mbar("b10-canvas","sortino_1y",false,(v)=>v.toFixed(2),"Sortino");
-    mbar("b11-canvas","ter",true,(v)=>v.toFixed(2)+"%","TER (%)");
+    mbar("b8-canvas","r_1y",v=>v*100,(v)=>v.toFixed(1)+"%","1 éves hozam (%)");
+    mbar("b9-canvas","sharpe_1y",v=>v,(v)=>v.toFixed(2),"Sharpe");
+    mbar("b10-canvas","sortino_1y",v=>v,(v)=>v.toFixed(2),"Sortino");
+    mbar("b11-canvas","ter",v=>v*100,(v)=>v.toFixed(2)+"%","TER (%)");
+    mbar("b16-canvas","max_drawdown",v=>v*100,(v)=>v.toFixed(1)+"%","Drawdown (%)");
+    mbar("b17-canvas","turnover_cum_30d_huf",v=>v/1e9,(v)=>(v>=0?"+":"")+v.toFixed(2),"30 napos forgalom (Mrd Ft)");
     // bubble
     const aums=peers.map(r=>r.aum_huf||0),mn=Math.min(...aums,0),mx=Math.max(...aums,1);
     const rad=a=> peers.length<=1?16:8+22*Math.sqrt(((a||0)-mn)/((mx-mn)||1));
@@ -517,9 +520,9 @@ async function renderB12(peers,cmap){
     data:dates.map(dt=> byFund[p.isin][dt]!=null?byFund[p.isin][dt]:null),spanGaps:true,pointRadius:0,borderWidth:2,tension:.2}));
   if(charts.b12)charts.b12.destroy();
   charts.b12=new Chart(el("b12-canvas"),{type:"line",data:{labels:dates,datasets},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
       scales:{x:{ticks:{maxTicksLimit:8,autoSkip:true}},y:{title:{display:true,text:"Napi forgalom"}}},
-      plugins:{legend:{position:"bottom"},datalabels:{display:false}}}});
+      plugins:{legend:{position:"bottom"},datalabels:{display:false},tooltip:{mode:"index",intersect:false,yAlign:"bottom"}}}});
 }
 
 // 14) 1 éves hozam alakulása — gördülő 1 éves hozam idősor
@@ -561,10 +564,10 @@ async function setupB14(peers,cmap2){
     if(charts.b14)charts.b14.destroy();
     if(!datasets.length) return;
     charts.b14=new Chart(el("b14-canvas"),{type:"line",data:{labels:allDates,datasets},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
         scales:{x:{ticks:{maxTicksLimit:9,autoSkip:true}},y:{title:{display:true,text:"1 éves hozam (%)"}}},
         plugins:{legend:{position:"bottom"},datalabels:{display:false},
-          tooltip:{callbacks:{label:c=> c.parsed.y!=null? `${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:""}}}}});
+          tooltip:{mode:"index",intersect:false,yAlign:"bottom",callbacks:{label:c=> c.parsed.y!=null? `${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:""}}}}});
   }
 }
 
@@ -619,7 +622,7 @@ async function init(){
   try{
     RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
-    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();buildAcost();buildAcat();
+    buildA1();buildA2();buildA3();buildA4();buildA5();buildA6();buildA7();buildA8();buildA9();buildAcat();
     buildB();
     document.querySelectorAll(".viewswitch button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
     const g=el("illiq-global"); g.addEventListener("change",()=>{ window.SHOW_ILLIQUID=g.checked; renderActive(); });

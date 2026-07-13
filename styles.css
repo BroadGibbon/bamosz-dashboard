@@ -131,17 +131,21 @@ tbody tr.sel-row td:first-child{background:#dff3e6 !important; box-shadow:inset 
 .kv .k{font-size:12px; color:#5a6b6e; margin-bottom:2px}
 .kv .v{font-weight:700; color:var(--dark); font-size:15px}
 
-/* ===== Alap-oldal: piros–zöld skálák ===== */
-.gauge-row{margin:16px 0 20px}
+/* ===== Alap-oldal: piros–zöld skálák (buborékos) ===== */
+.gauge-row{margin:16px 0 24px}
 .gauge-lab{font-weight:700; color:var(--dark); margin-bottom:8px}
-.gauge-track{position:relative; height:22px}
-.gauge-bar{position:absolute; inset:0; border-radius:6px; opacity:.9}
-.gauge-avg{position:absolute; top:-4px; bottom:-4px; width:0; border-left:2px dashed #37474f}
-.gauge-fund{position:absolute; top:-4px; bottom:-4px; width:0; border-left:3px solid #0D1B1E}
-.gauge-fund::after{content:""; position:absolute; left:-7px; top:-9px; width:12px; height:12px;
-  background:#0D1B1E; border:2px solid #fff; border-radius:50%; box-shadow:0 1px 2px rgba(0,0,0,.3)}
-.gauge-ends{display:flex; justify-content:space-between; font-size:12px; color:#5a6b6e; margin-top:7px}
-.gauge-vals{display:flex; flex-wrap:wrap; gap:8px 20px; font-size:13px; margin-top:3px}
-.gauge-vals .g-fund b{color:var(--dark)}
-.gauge-vals .g-avg b{color:#37474f}
+.gauge-wrap{position:relative; height:92px}
+.gauge-track{position:absolute; top:32px; left:0; right:0; height:16px; border-radius:8px}
+.gbub{position:absolute; transform:translateX(-50%); white-space:nowrap; font-size:12px; font-weight:700;
+  padding:3px 9px; border-radius:9px; box-shadow:0 1px 3px rgba(0,0,0,.2); z-index:2}
+.gbub-fund{top:0; background:#0D1B1E; color:#fff}
+.gbub-fund::after{content:""; position:absolute; left:50%; top:100%; transform:translateX(-50%);
+  border:6px solid transparent; border-top-color:#0D1B1E}
+.gbub-avg{top:54px; background:#fff; color:#37474f; border:1.5px solid #37474f}
+.gbub-avg::after{content:""; position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+  border:6px solid transparent; border-bottom-color:#37474f}
+.gend{position:absolute; bottom:0; font-size:13px; font-weight:800; color:#fff;
+  padding:2px 9px; border-radius:6px}
+.gmin{left:0; background:#c62828}
+.gmax{right:0; background:#2E8B6B}
 .gauge-na{color:#5a6b6e; font-size:13px}

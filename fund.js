@@ -118,13 +118,13 @@ function buildGauges(f, group){
     const fp=pos(f[m.key]); const ap=avg!=null?pos(avg):null;
     return `<div class="gauge-row">
       <div class="gauge-lab">${m.label}</div>
-      <div class="gauge-track">
-        <div class="gauge-bar" style="background:${grad}"></div>
-        ${ap!=null?`<div class="gauge-avg" style="left:${ap}%"></div>`:""}
-        <div class="gauge-fund" style="left:${fp}%"></div>
+      <div class="gauge-wrap">
+        <div class="gbub gbub-fund" style="left:${fp}%">Alap: ${m.fmt(f[m.key])}</div>
+        <div class="gauge-track" style="background:${grad}"></div>
+        ${ap!=null?`<div class="gbub gbub-avg" style="left:${ap}%">Átlag: ${m.fmt(avg)}</div>`:""}
+        <div class="gend gmin">min ${m.fmt(min)}</div>
+        <div class="gend gmax">max ${m.fmt(max)}</div>
       </div>
-      <div class="gauge-ends"><span>min: ${m.fmt(min)}</span><span>max: ${m.fmt(max)}</span></div>
-      <div class="gauge-vals"><span class="g-fund">● Alap: <b>${m.fmt(f[m.key])}</b></span>${avg!=null?`<span class="g-avg">▏ Csoport átlag: <b>${m.fmt(avg)}</b></span>`:""}</div>
     </div>`;
   }).join("");
 }
