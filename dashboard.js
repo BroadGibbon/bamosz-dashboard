@@ -299,14 +299,22 @@ function buildA7(){
 }
 
 // 8) Alapkezelők nettó forgalom – 30 nap
+const A8_WIN=[
+ {key:"turnover_cum_30d_huf",label:"Elmúlt 30 nap"},
+ {key:"turnover_cum_3m_huf", label:"Elmúlt 3 hónap"},
+ {key:"turnover_cum_ytd_huf",label:(new Date().getFullYear())+" YTD"},
+ {key:"turnover_cum_1y_huf", label:"Elmúlt 1 év"},
+];
 function buildA8(){
   const fCat=MultiSelect("Kategória",CATEGORIES,{onChange:render});
   const fRisk=MultiSelect("Kockázat",RISKS,{numeric:true,onChange:render,renderOption:riskOpt});
   const fCcy=MultiSelect("Deviza",CURRENCIES,{onChange:render});
   el("a8-filters").append(fCat.el,fRisk.el,fCcy.el);
+  const rs=el("a8-range"); rs.innerHTML=A8_WIN.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
+  let win=A8_WIN[0].key; rs.value=win; rs.onchange=()=>{win=rs.value;render();};
   function render(){
     const d=filterData(RAW,{category:fCat.getSet(),risk_return:fRisk.getSet(),currency:fCcy.getSet()});
-    const by={}; d.forEach(r=>{ if(r.turnover_cum_30d_huf!=null) by[r.manager]=(by[r.manager]||0)+r.turnover_cum_30d_huf; });
+    const by={}; d.forEach(r=>{ if(r[win]!=null) by[r.manager]=(by[r.manager]||0)+r[win]; });
     const arr=Object.entries(by).map(([m,v])=>({manager:m,val:v})).filter(x=>x.val!==0).sort((a,b)=>b.val-a.val);
     const rows=[...arr.slice(0,10),...arr.slice(-10).filter(x=>x.val<0).reverse()];
     hbar("a8-canvas",rows.map(r=>r.manager),rows.map(r=>r.val/1e9),
@@ -596,7 +604,7 @@ function switchView(v){
 }
 async function init(){
   try{
-    RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,peer_group_isin,peer_group_name");
+    RAW=await sbGetAll("fund_latest?select=isin,name,series,manager,category,currency,risk_return,aum_huf,r_1y,ytd,vol_1y,sharpe_1y,sortino_1y,ter,max_drawdown,decline_days,recovery_days,is_illiquid,obs_date,turnover_cum_30d_huf,turnover_cum_3m_huf,turnover_cum_ytd_huf,turnover_cum_1y_huf,peer_group_isin,peer_group_name");
     CATEGORIES=uniq("category"); CURRENCIES=uniq("currency"); RISKS=uniq("risk_return"); MANAGERS=uniq("manager");
     [buildA1,buildA2,buildA3,buildA4,buildA5,buildA6,buildA7,buildA8,buildA9,buildAcat,buildB]
       .forEach(fn=>{ try{ fn(); }catch(e){ console.warn("Csempe kihagyva:", e); } });
